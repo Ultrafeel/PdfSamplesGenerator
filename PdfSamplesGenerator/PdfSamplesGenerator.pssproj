@@ -13,6 +13,7 @@
     <PowerShellVersion>v4</PowerShellVersion>
     <ProcessorArchitecture />
     <RequiredModules />
+    <DebugArguments>"d:\!Work\Pdf_c\TestFolder"</DebugArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>

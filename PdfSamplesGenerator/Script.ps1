@@ -1,8 +1,8 @@
 ﻿#
 # Script.ps1
 #
-if ($args.Count -gt 0 -and $args[1].LENGTH -andgt 0)
-{  $targetP =  $args[1]
+if ($args.Count -gt 0 -and $args[0].LENGTH -ge 0)
+{  $targetP =  $args[0]
 }
 else
 { $targetP = Get-Location }
@@ -13,13 +13,16 @@ $Arch = $cont1| Where Extension -in '.zip','.rar'
  if ($Arch.Length -eq 0 )
  {
 
-  foreach ($value in $nonArch){
+  foreach ($value in $cont1){
  
-   if ($value.Extension -eq "docx")
+   if ($value.Extension -eq ".docx")
    {
    "Wow"
+	   $value.FullPath
+	   Print1 ($value)
     break; 
     }
+	Write-Host   $value.FullName
   Write-Host $value
 	  }
 }
@@ -27,6 +30,62 @@ else
 {
 
 }
+
+
+$printto = "d:\INSTALL\!office\Bullzip\files\printto.exe" 
+
+function Print1 ($file)
+{
+
+# Set environment variables used by the batch file
+
+$PRINTERNAMe="Bullzip PDF Printer"
+$PRINTERNAMe
+# PDF Writer - bioPDF
+
+# Create settings \ runonce.ini
+# $LAPP=$env:LOCALAPPDATA
+$LAPP=$env:APPDATA
+$SF1="settings.ini"
+
+IF ($LAPP.length -eq 0) 
+{	$LAPP="$env:USERPROFILE\Local Settings\Application Data" }
+$settings="$LAPP\PDF Writer\$PRINTERNAME\$SF1"
+ECHO $settings
+	$settFile;
+	$settingsBackFile;
+IF (Test-Path "$settings" )
+	{
+		$settFile = (Get-Item $settings)
+	$settingsBackFileName  =  $settFile.name + ".back"
+		 rename-item $settFile $settingsBackFileName -Force
+	$settingsBackFile = Get-Item Join-Path $settFile.Directory $settingsBackFileName
+	}
+	#(rename "$settings" "$SF1.back")
+$samplesTargetDirName = "Образец"
+	$sampleSuffix = "_образец"
+	$samplesTarget = Join-Path $file.Directory $samplesTargetDirName
+	$sampleFileName = $file.basename + $sampleSuffix
+	# %CD%\out\demo.pdf
+ECHO "Save settings to \"$settings\""
+ECHO "[PDF Printer]" >  "$settings"
+ECHO "output=$samplesTarget\$sampleFileName.pdf" >> "$settings"
+ECHO author=Demo Script >> "$settings"
+ECHO showsettings=never >> "$settings"
+ECHO showpdf=no >> "$settings"
+ECHO watermarktext=Batch Demo >>  "$settings"
+ECHO confirmoverwrite=no >>  "$settings"
+ "$file.FullName"
+	 "{$file.FullName}"
+& $printto (""""+$file.FullName+"""") (""""+$PRINTERNAME+"""")
+
+
+# $printto.exe "in\example.rtf" "$PRINTERNAME"
+ECHO ERRORLEVEL=$lastexitcode
+IF ($settingsBackFile.Exists) #(Test-Path "$settings.back")
+	{Rename-Item -Force $settingsBackFile.FullName $settfile.Name}
+}
+
 
 #Foreach-Object {
 #    $content = Get-Content $_.FullName
