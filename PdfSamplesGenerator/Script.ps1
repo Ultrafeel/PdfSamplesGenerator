@@ -67,16 +67,23 @@ function Print1 ($file)
 	
 	 # %CD%\out\demo.pdf
   ECHO "Save settings to \" $settings\""
-  ECHO "[PDF Printer]" > "$settings"
-  ECHO "output=$outFile" >> "$settings"
-  ECHO author=PdfSamplesGenerator >> "$settings"
-  ECHO showsettings=never >> "$settings"
-  ECHO showpdf=no >> "$settings"
-  Out-File "$settings" -Append -Encoding "unicode" -InputObject "watermarktext=$watermarkText"
-#"CP1251"
- # ECHO 
-@"
-  watermarkfontsize=50
+  #ECHO "[PDF Printer]" > "$settings"
+  #ECHO "output=$outFile" 			 >> "$settings"
+  #ECHO author=PdfSamplesGenerator 	>> "$settings"
+  #ECHO showsettings=never 			>> "$settings"
+  #ECHO showpdf=no >> "$settings"
+
+ # Out-File "$settings" -Append -Encoding "unicode" -InputObject 	"$watermarkText"
+ 
+	# Нельзя добавлять в конце пробелы!!
+  Out-File "$settings" -Encoding "unicode" -InputObject @"
+[PDF Printer]
+  output=$outFile
+  author=PdfSamplesGenerator
+  showsettings=never
+  showpdf=no
+  watermarktext=$watermarkText
+  watermarkfontsize=70
   watermarkrotation=c2c
   watermarkcolor=
   watermarkfontname=arial.ttf
@@ -84,15 +91,18 @@ function Print1 ($file)
   watermarklayer=top
   watermarkverticalposition=center
   watermarkhorizontalposition=center
-"@ 	>> "$settings"
+  confirmoverwrite=no
+"@ 
+	#	>> "$settings"
 	#PrintToPrinter=Foxit Reader PDF Printer
 	#PrinterFirstPage=1
 	#PrinterLastPage=2
 
   # ECHO "watermarktext=$watermarkText" >> "$settings"
-  ECHO confirmoverwrite=no >> "$settings"
+ # ECHO >> "$settings"
   "$file.FullName"
   "{$file.FullName}"
+
   & $printto ("""" + $file.FullName + """") ("""" + $PRINTERNAME + """")
 
 
