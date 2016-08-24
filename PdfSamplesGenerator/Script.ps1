@@ -15,7 +15,7 @@ if ($Arch.LENGTH -eq 0)
 
   foreach ($value in $cont1) {
 
-    if ($value.Extension -eq ".docx")
+    if ($value.Extension -eq ".rtf")#docx
     {
       "Wow"
       $value.FullPath
@@ -56,28 +56,56 @@ function Print1 ($file)
   ECHO $settings
   $settFile = $null
   $settingsBackFile = $null
-  $settingsBackFileName = $settFile.name + ".back"
-  if (Test-Path "$settings")
+   if (Test-Path "$settings")
   {
     $settFile = (Get-Item $settings)
+	 $settingsBackFileName = $SF1 + ".back"
+	 $settingsBackFile = Join-Path $settFile.Directory $settingsBackFileName|Get-Item  
+	  Remove-Item $settingsBackFile.FullName -Force;
+	  Move-Item $settFile.FullName $settingsBackFile.FullName -Force
+	  # Get-Item $settingsBackFile
     # rename-item $settFile $settingsBackFileName -Force
-    $newSett = New-Item $(Join-Path $settFile.Directory($settFile.name + ".new"))
-    #	$newSett.Replace  "$($settFile.FullName)" "$(Join-Path  $settFile.Directory   $settingsBackFileName )"  $true 
-    # $settingsBackFile = Join-Path $settFile.Directory $settingsBackFileName|Get-Item 
+
+    #  $newSett = New-Item $(Join-Path $settFile.Directory ($settFile.name + ".new")) # $newSett = New-Item $(Join-Path $settFile.Directory ($settFile.name + ".new"))
+   # $newSett.Replace(($settFile.FullName) ,(Join-Path  $settFile.Directory   $settingsBackFileName ) ,($true) )
+   
   }
+	else
+	{
+	 #$settingsBackFileName = $SF1 + ".back"
+ 
+	}
   #(rename "$settings" "$SF1.back")
   $samplesTargetDirName = "Образец"
   $sampleSuffix = "_образец"
-  $samplesTarget = Join-Path $file.Directory $samplesTargetDirName
+	$watermarkText = "образец"
+	$samplesTarget = Join-Path $file.Directory $samplesTargetDirName
   $sampleFileName = $file.basename + $sampleSuffix
   # %CD%\out\demo.pdf
   ECHO "Save settings to \" $settings\""
   ECHO "[PDF Printer]" > "$settings"
   ECHO "output=$samplesTarget\$sampleFileName.pdf" >> "$settings"
-  ECHO author=Demo Script >> "$settings"
+  ECHO author=PdfSamplesGenerator >> "$settings"
   ECHO showsettings=never >> "$settings"
   ECHO showpdf=no >> "$settings"
-  ECHO "watermarktext=Batch Demo" >> "$settings"
+  Out-File "$settings" -Append -Encoding "CP1251" -InputObject "watermarktext=$watermarkText"
+
+  ECHO 
+@"
+  watermarkfontsize=50
+  watermarkrotation=c2c
+  watermarkcolor=
+  watermarkfontname=arial.ttf
+  watermarkoutlinewidth=2
+  watermarklayer=top
+  watermarkverticalposition=center
+  watermarkhorizontalposition=center
+	PrinterFirstPage=1
+	PrinterLastPage=2
+"@
+	>> "$settings"
+
+  # ECHO "watermarktext=$watermarkText" >> "$settings"
   ECHO confirmoverwrite=no >> "$settings"
   "$file.FullName"
   "{$file.FullName}"
@@ -87,7 +115,10 @@ function Print1 ($file)
   # $printto.exe "in\example.rtf" "$PRINTERNAME"
   ECHO ERRORLEVEL=$lastexitcode
   if ($settingsBackFile -ne $null -and $settingsBackFile.Exists) #(Test-Path "$settings.back")
-  { Rename-Item -Force $settingsBackFile.FullName $settfile.name }
+  { 
+	 # Remove-Item -Force $settings
+	 # move-Item -Force $settingsBackFile.FullName $SF1 
+   }
   elseif (Test-Path $settingsBackFileName)
   {
     Rename-Item -Force $settingsBackFileName $settfile.name
