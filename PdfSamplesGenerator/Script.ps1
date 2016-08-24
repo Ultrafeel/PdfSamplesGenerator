@@ -52,14 +52,14 @@ IF ($LAPP.length -eq 0)
 {	$LAPP="$env:USERPROFILE\Local Settings\Application Data" }
 $settings="$LAPP\PDF Writer\$PRINTERNAME\$SF1"
 ECHO $settings
-	$settFile;
-	$settingsBackFile;
+	$settFile=$null
+	$settingsBackFile=$null
+	$settingsBackFileName  =  $settFile.name + ".back"
 IF (Test-Path "$settings" )
 	{
 		$settFile = (Get-Item $settings)
-	$settingsBackFileName  =  $settFile.name + ".back"
 		 rename-item $settFile $settingsBackFileName -Force
-	$settingsBackFile = Get-Item Join-Path $settFile.Directory $settingsBackFileName
+	$settingsBackFile = Join-Path $settFile.Directory $settingsBackFileName|Get-Item 
 	}
 	#(rename "$settings" "$SF1.back")
 $samplesTargetDirName = "Образец"
@@ -73,7 +73,7 @@ ECHO "output=$samplesTarget\$sampleFileName.pdf" >> "$settings"
 ECHO author=Demo Script >> "$settings"
 ECHO showsettings=never >> "$settings"
 ECHO showpdf=no >> "$settings"
-ECHO watermarktext=Batch Demo >>  "$settings"
+ECHO "watermarktext=Batch Demo" >>  "$settings"
 ECHO confirmoverwrite=no >>  "$settings"
  "$file.FullName"
 	 "{$file.FullName}"
@@ -82,8 +82,12 @@ ECHO confirmoverwrite=no >>  "$settings"
 
 # $printto.exe "in\example.rtf" "$PRINTERNAME"
 ECHO ERRORLEVEL=$lastexitcode
-IF ($settingsBackFile.Exists) #(Test-Path "$settings.back")
+IF ($settingsBackFile -ne $null -and $settingsBackFile.Exists) #(Test-Path "$settings.back")
 	{Rename-Item -Force $settingsBackFile.FullName $settfile.Name}
+	elseif (Test-Path $settingsBackFileName)
+	{
+		Rename-Item -Force $settingsBackFileName $settfile.Name
+	}
 }
 
 
