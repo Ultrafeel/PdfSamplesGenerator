@@ -5,7 +5,7 @@
 
 
 $printto = "d:\INSTALL\!office\Bullzip\files\printto.exe"
-
+$pdftk  ="C:\Program Files (x86)\PDFtk\bin\pdftk.exe"# = "pdftk"
 function Print1 ($file)
 {
 
@@ -53,16 +53,18 @@ function Print1 ($file)
 	$watermarkText = "образец"
 	$samplesTarget = Join-Path $file.Directory $samplesTargetDirName
   $sampleFileName = $file.basename + $sampleSuffix
-  # %CD%\out\demo.pdf
+	$outFile =	"$samplesTarget\$sampleFileName.pdf" 
+	
+	 # %CD%\out\demo.pdf
   ECHO "Save settings to \" $settings\""
   ECHO "[PDF Printer]" > "$settings"
-  ECHO "output=$samplesTarget\$sampleFileName.pdf" >> "$settings"
+  ECHO "output=$outFile" >> "$settings"
   ECHO author=PdfSamplesGenerator >> "$settings"
   ECHO showsettings=never >> "$settings"
   ECHO showpdf=no >> "$settings"
-  Out-File "$settings" -Append -Encoding "CP1251" -InputObject "watermarktext=$watermarkText"
-
-  ECHO 
+  Out-File "$settings" -Append -Encoding "unicode" -InputObject "watermarktext=$watermarkText"
+#"CP1251"
+ # ECHO 
 @"
   watermarkfontsize=50
   watermarkrotation=c2c
@@ -72,10 +74,10 @@ function Print1 ($file)
   watermarklayer=top
   watermarkverticalposition=center
   watermarkhorizontalposition=center
-	PrinterFirstPage=1
-	PrinterLastPage=2
-"@
-	>> "$settings"
+"@ 	>> "$settings"
+	#PrintToPrinter=Foxit Reader PDF Printer
+	#PrinterFirstPage=1
+	#PrinterLastPage=2
 
   # ECHO "watermarktext=$watermarkText" >> "$settings"
   ECHO confirmoverwrite=no >> "$settings"
@@ -85,7 +87,17 @@ function Print1 ($file)
 
 
   # $printto.exe "in\example.rtf" "$PRINTERNAME"
-  ECHO ERRORLEVEL=$lastexitcode
+  $ptERRORLEVEL=$lastexitcode
+	# if ($ptERRORLEVEL -eq 0)
+	{   
+		$outFileCut = ($outFile+"2")
+		& $pdftk $outFile cat 1-8 output $outFileCut  verbose
+		if (Test-path  $outFileCut)
+		{
+			Remove-Item $outFile -Force;
+			Move-Item $outFileCut $outFile -Force
+		}
+	}
   if ($settingsBackFile -ne $null -and $settingsBackFile.Exists) #(Test-Path "$settings.back")
   { 
 	 # Remove-Item -Force $settings
@@ -116,7 +128,7 @@ if ($Arch.LENGTH -eq 0)
       "Wow"
       $value.FullPath
       Print1 ($value)
-      break;
+      #break;
     }
     Write-Host $value.FullName
     Write-Host $value
