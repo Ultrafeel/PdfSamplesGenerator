@@ -6,6 +6,15 @@
 
 $printto = "d:\INSTALL\!office\Bullzip\files\printto.exe"
 $pdftk  ="C:\Program Files (x86)\PDFtk\bin\pdftk.exe"# = "pdftk"
+
+
+function WaitForFile ($file)
+{
+	[int]$i=10000
+	for (; $i -gt 0 -and !(Test-Path $file); $i--) 
+		{ Start-Sleep 10 }
+	return ($i -gt 0);
+}
 function Print1 ($file)
 {
 
@@ -50,10 +59,11 @@ function Print1 ($file)
   #(rename "$settings" "$SF1.back")
   $samplesTargetDirName = "Образец"
   $sampleSuffix = "_образец"
-	$watermarkText = "образец"
+	$watermarkText = "OBRAZEC" # "образец"
 	$samplesTarget = Join-Path $file.Directory $samplesTargetDirName
   $sampleFileName = $file.basename + $sampleSuffix
-	$outFile =	"$samplesTarget\$sampleFileName.pdf" 
+	$outFileS =	"$samplesTarget\$sampleFileName" 
+	$outFile =	("$outFileS"+ ".pdf")
 	
 	 # %CD%\out\demo.pdf
   ECHO "Save settings to \" $settings\""
@@ -88,16 +98,24 @@ function Print1 ($file)
 
   # $printto.exe "in\example.rtf" "$PRINTERNAME"
   $ptERRORLEVEL=$lastexitcode
-	# if ($ptERRORLEVEL -eq 0)
-	{   
-		$outFileCut = ($outFile+"2")
-		& $pdftk $outFile cat 1-8 output $outFileCut  verbose
+	# if ($ptERRORLEVEL -eq 0) $res11 = & $pdftk "$outFile" dump_data | Select-string -Pattern "PageMediaNumber: ([0-9]*)"
+	  if ( WaitForFile($outFile) )
+	{
+		$res11 = & $pdftk "$outFile" dump_data | Select-string -Pattern "PageMediaNumber: ([0-9]+)"
+
+		$numOfPages = ($res11.Matches[0].Groups[1].value)
+		if ($numOfPages -gt 8)
+		{
+		$outFileCut = ("$samplesTarget\$sampleFileName"+"C.pdf") #($outFile
+		& $pdftk "$outFile" cat 1-8 output $outFileCut  verbose
 		if (Test-path  $outFileCut)
 		{
 			Remove-Item $outFile -Force;
 			Move-Item $outFileCut $outFile -Force
 		}
+		}
 	}
+	
   if ($settingsBackFile -ne $null -and $settingsBackFile.Exists) #(Test-Path "$settings.back")
   { 
 	 # Remove-Item -Force $settings
