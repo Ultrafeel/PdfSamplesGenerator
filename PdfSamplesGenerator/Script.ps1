@@ -50,22 +50,28 @@ function Print1 ($file)
   #(rename "$settings" "$SF1.back")
   $samplesTargetDirName = "Образец"
   $sampleSuffix = "_образец"
-	$watermarkText = "образец"
+	$watermarkText = "OBRAZEC" #"образец"
 	$samplesTarget = Join-Path $file.Directory $samplesTargetDirName
   $sampleFileName = $file.basename + $sampleSuffix
 	$outFile =	"$samplesTarget\$sampleFileName.pdf" 
 	
 	 # %CD%\out\demo.pdf
   ECHO "Save settings to \" $settings\""
-  ECHO "[PDF Printer]" > "$settings"
-  ECHO "output=$outFile" >> "$settings"
-  ECHO author=PdfSamplesGenerator >> "$settings"
-  ECHO showsettings=never >> "$settings"
-  ECHO showpdf=no >> "$settings"
-  Out-File "$settings" -Append -Encoding "unicode" -InputObject "watermarktext=$watermarkText"
-#"CP1251"
- # ECHO 
-@"
+  #ECHO "[PDF Printer]" > "$settings"
+  #ECHO "output=$outFile" 			 >> "$settings"
+  #ECHO author=PdfSamplesGenerator 	>> "$settings"
+  #ECHO showsettings=never 			>> "$settings"
+  #ECHO showpdf=no >> "$settings"
+
+ # Out-File "$settings" -Append -Encoding "unicode" -InputObject 	"$watermarkText"
+ 
+  Out-File "$settings" -Encoding "unicode" -InputObject @"
+[PDF Printer]
+  output=$outFile			
+  author=PdfSamplesGenerator 	
+  showsettings=never 			
+  showpdf=no 
+  watermarktext=$watermarkText
   watermarkfontsize=50
   watermarkrotation=c2c
   watermarkcolor=
@@ -74,15 +80,19 @@ function Print1 ($file)
   watermarklayer=top
   watermarkverticalposition=center
   watermarkhorizontalposition=center
-"@ 	>> "$settings"
+  confirmoverwrite=no
+
+"@ 
+	#	>> "$settings"
 	#PrintToPrinter=Foxit Reader PDF Printer
 	#PrinterFirstPage=1
 	#PrinterLastPage=2
 
   # ECHO "watermarktext=$watermarkText" >> "$settings"
-  ECHO confirmoverwrite=no >> "$settings"
+ # ECHO >> "$settings"
   "$file.FullName"
   "{$file.FullName}"
+
   & $printto ("""" + $file.FullName + """") ("""" + $PRINTERNAME + """")
 
 
@@ -127,10 +137,10 @@ if ($Arch.LENGTH -eq 0)
     {
       "Wow"
       $value.FullPath
-      Print1 ($value)
-      #break;
+     Print1 ($value)
+      break;
     }
-    Write-Host $value.FullName
+     Write-Host $value.FullName
     Write-Host $value
   }
 }
