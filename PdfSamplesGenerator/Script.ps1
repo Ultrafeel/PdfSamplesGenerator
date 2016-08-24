@@ -1,35 +1,7 @@
 ﻿#
 # Script.ps1
 #
-if ($args.Count -gt 0 -and $args[0].LENGTH -ge 0)
-{ $targetP = $args[0]
-}
-else
-{ $targetP = Get-Location }
 
-$cont1 = Get-ChildItem $targetP
-$Arch = $cont1 | Where Extension -In '.zip','.rar'
-#$nonArch = $cont1| Where-Object {$_.Extension -notin '.zip','.rar' }#,'.config'
-if ($Arch.LENGTH -eq 0)
-{
-
-  foreach ($value in $cont1) {
-
-    if ($value.Extension -eq ".rtf")#docx
-    {
-      "Wow"
-      $value.FullPath
-      Print1 ($value)
-      break;
-    }
-    Write-Host $value.FullName
-    Write-Host $value
-  }
-}
-else
-{
-
-}
 
 
 $printto = "d:\INSTALL\!office\Bullzip\files\printto.exe"
@@ -124,6 +96,37 @@ function Print1 ($file)
     Rename-Item -Force $settingsBackFileName $settfile.name
   }
 }
+
+if ($args.Count -gt 0 -and $args[0].LENGTH -ge 0)
+{ $targetP = $args[0]
+}
+else
+{ $targetP = Get-Location }
+
+$cont1 = Get-ChildItem $targetP
+$Arch = $cont1 | Where Extension -In '.zip','.rar'
+#$nonArch = $cont1| Where-Object {$_.Extension -notin '.zip','.rar' }#,'.config'
+if ($Arch.LENGTH -eq 0)
+{
+
+  foreach ($value in $cont1) {
+
+    if ($value.Extension -eq ".rtf")#docx
+    {
+      "Wow"
+      $value.FullPath
+      Print1 ($value)
+      break;
+    }
+    Write-Host $value.FullName
+    Write-Host $value
+  }
+}
+else
+{
+
+}
+
 
 
 #Foreach-Object {
