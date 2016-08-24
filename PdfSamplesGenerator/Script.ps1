@@ -58,8 +58,10 @@ ECHO $settings
 IF (Test-Path "$settings" )
 	{
 		$settFile = (Get-Item $settings)
-		 rename-item $settFile $settingsBackFileName -Force
-	$settingsBackFile = Join-Path $settFile.Directory $settingsBackFileName|Get-Item 
+		# rename-item $settFile $settingsBackFileName -Force
+		 $newSett = New-Item Join-Path $settFile.Directory ( $settFile.name + ".new" )
+		$newSett.Replace($settFile.FullName, Join-Path $settFile.Directory $settingsBackFileName, true)
+	     # $settingsBackFile = Join-Path $settFile.Directory $settingsBackFileName|Get-Item 
 	}
 	#(rename "$settings" "$SF1.back")
 $samplesTargetDirName = "Образец"
