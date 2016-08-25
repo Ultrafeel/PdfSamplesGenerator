@@ -15,6 +15,20 @@ function WaitForFile ($file)
 		{ Start-Sleep 10 }
 	return ($i -gt 0);
 }
+
+[System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms")
+function msgBoxRetryCancel($x)
+{
+		# “Продолжить” или “Отменить”
+
+	$OUTPUT=  [System.Windows.Forms.MessageBox]::Show($x, 
+		'Генератор PDF образцов:PowerShell', 
+	[Windows.Forms.MessageBoxButtons]::RetryCancel , 
+	[Windows.Forms.MessageBoxIcon]::Exclamation, #Information
+		 [Windows.Forms.MessageBoxDefaultButton]::Button1)
+	# [Windows.Forms.MessageBoxOptions]::ServiceNotification
+	return $OUTPUT;
+}
 function Print1 ($file)
 {
 
@@ -57,11 +71,23 @@ function Print1 ($file)
  
 	}
   #(rename "$settings" "$SF1.back")
-  $samplesTargetDirName = "Образец"
+  $samplesTargetDirName = "Образцы"
   $sampleSuffix = "_образец"
 	$watermarkText = "OBRAZEC" # "образец"
 	$samplesTarget = Join-Path $file.Directory $samplesTargetDirName
   $sampleFileName = $file.basename + $sampleSuffix
+
+
+	while (!(Test-Path $samplesTarget))
+	{
+		$msg = "Нет папки `“$samplesTargetDirName`” по пути `“$($file.Directory)`”"
+		$OUTPUT = msgBoxRetryCancel($msg)
+		if ($OUTPUT -eq [System.Windows.Forms.DialogResult]::Cancel ) 
+		{ 
+			throw $msg;
+		} 
+	}
+
 	$outFileS =	"$samplesTarget\$sampleFileName" 
 	$outFile =	("$outFileS"+ ".pdf")
 	
