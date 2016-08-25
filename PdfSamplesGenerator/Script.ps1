@@ -66,7 +66,7 @@ function Print1 ($file, [string]$obrazcyParentDir)
 	if ($obrazcyParentDir -eq $null)
 	{
 		$obrazcyParentDir = $file.Directory
-		}
+	}
   # Set environment variables used by the batch file
 
   $PRINTERNAMe = "Bullzip PDF Printer"
@@ -204,12 +204,12 @@ function Print1 ($file, [string]$obrazcyParentDir)
     Rename-Item -Force $settingsBackFileName $settfile.name
   }
 }
-
-
+$docExtensions1 = ".rtf",".cdr",".jpg",".tif",".tiff",".doc",".docx",".indd"
+$docExtensions = $docExtensions1 + ".pdf"
 function AlgA_Iter
 {
 	params($value, $obrazcyParentDir)
-	    if ($value.Extension -in ".rtf",".cdr",".jpg",".tif",".tiff",".doc",".docx",".indd")
+	if ($value.Extension -in $docExtensions1)
     {
 
       Print1 ($value, $obrazcyParentDir)
@@ -228,14 +228,13 @@ if ($args.Count -gt 0 -and $args[0].length -ge 0)
 }
 else
 { $targetP = Get-Location }
-Algs($targetP , $false, $null)
 
-function Algs($targetP, [Boolean]$algAForB, $obrazcyParentDir)
+function Algs([string]$targetP1, [Boolean]$algAForB, $obrazcyParentDir)
 {
 	
 	[Boolean]$algAOnly = $algAForB
 
-$cont1 = Get-ChildItem $targetP
+$cont1 = Get-ChildItem $targetP1
 
 
 $archs =
@@ -262,12 +261,12 @@ $ArchsExts = ($archs | ForEach-Object { $_[0] })
 
 
 # foreach ($value in $cont1) 
-for ($i = 1; $i -le $cont1.Count; $i++)
+for ($iF = 1; $iF -le $cont1.Count; $iF++)
 {
 
-  $value = $cont1[$i]
+  $value = $cont1[$iF]
   Write-Progress -Activity “Generating samples” -Status “ file $value” `
-     -PercentComplete ($i / $cont1.Count * 100)
+     -PercentComplete ($iF / $cont1.Count * 100)
   # $cont1 | Select name
 
   if ($value.Attributes -band [System.IO.FileAttributes]::Directory)
@@ -349,16 +348,25 @@ for ($i = 1; $i -le $cont1.Count; $i++)
         }
 
       }
-      $aafiles
+     # $aafiles
     }
 
 
 	# если папок нет
 	  if (($aafiles| Where-Object { $_.isdir }).Length -eq 0)
 	  {
-		 $TMPfullP = $value.FullName + "ext"
-		 & $u7z "e" $value.FullName "-o$TMPfullP" "-i!$arPath" "-y"
-
+		  
+		#[System.Reflection.Assembly]::LoadWithPartialName("System.IO.Path")
+		$TMPfiltFile = "ExtList.extList"	#Get-Item ($value.Directory.ToString()+  [System.IO.Path]::GetTempFileName()
+		 $TMPfullP =   $value.FullName + "ext"
+		  $oldWD = Get-Location
+		  cd $value.Directory
+		out-file	$TMPfiltFile -Encoding "utf8" -InputObject 	( ($docExtensions|% {"*" + $_}) -join "`n")  
+	 & $u7z "e" $value.Name "-o$TMPfullP" "-i@$TMPfiltFile" "-y"
+		cd $oldWD
+		  Algs (Get-Item $TMPfullP)  $true  $value.Directory 
+		  Remove-Item $TMPfullP -Force
+		 Remove-Item  $TMPfiltFile -Force
 	  
 	  }
   <#  $archCont = $archContT | Select-String -Pattern "Path = (.*)"
@@ -389,7 +397,9 @@ for ($i = 1; $i -le $cont1.Count; $i++)
 }
 
 
+}
 
+Algs $targetP   $false  $null 
 
 #Foreach-Object {
 #    $content = Get-Content $_.FullName
