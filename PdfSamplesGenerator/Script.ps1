@@ -2,20 +2,31 @@
 # Script.ps1
 #
 
-
+function EchoA
+{
+    for($i=0;$i -lt $args.length;$i++)
+    {
+        "Arg $i is <$($args[$i])>"
+    }
+}
 function printto
 {
   param([string]$file,[string]$printer)
-
+  #$err1;
   if ($printer -ne $null)
   {
-    Start-Process –FilePath $file -ArgumentList $printer -Verb "printto" -Wait
+    Start-Process –FilePath $file -ArgumentList $printer -Verb "printto" -Wait -errorVariable err1
   }
   else
   {
-    Start-Process –FilePath $file -Verb "print" -Wait
+    Start-Process –FilePath $file -Verb "print" -Wait -errorVariable err1
 
   }
+	if ($err1 -ne $null)
+	{
+		return $false
+		}
+	return $true;
 
 }
 $printto = #= "d:\INSTALL\!office\Bullzip\files\printto.exe"
@@ -147,18 +158,18 @@ function Print1 ($file)
   # ECHO >> "$settings"
   "$file.FullName"
 
-  printto ("""" + $file.FullName + """") ("""" + $PRINTERNAME + """") -ErrorAction Continue -ErrorVariable ProcessError
-  #  Silently
-  if ($ProcessError) {
+  $ptSuccess = printto $file.FullName  $PRINTERNAME 
+  #  Silently-ErrorVariable ProcessError -ErrorAction Continue 
+  if (!$ptSuccess) {
 
-    ECHO $file.FullName + "не имеет печатающей программы"
+    ECHO $($file.FullName) + "не имеет печатающей программы"
 
     return;
   }
 
 
   # $printto.exe "in\example.rtf" "$PRINTERNAME"
-  $ptERRORLEVEL = $lastexitcode
+#  $ptERRORLEVEL = $lastexitcode
   # if ($ptERRORLEVEL -eq 0) $res11 = & $pdftk "$outFile" dump_data | Select-string -Pattern "PageMediaNumber: ([0-9]*)"
   if (WaitForFile ($outFile))
   {
@@ -199,9 +210,9 @@ $cont1 = Get-ChildItem $targetP
 
 $archs = 
 
-((	"7z	"	)	,		"7z"	) 				,
-((	"xz	"	)	,		"XZ"	)				,
-((	"zip	"	)	,		"ZIP"	)			,
+((	"7z"	)	,		"7z"	) 				,
+((	"xz"	)	,		"XZ"	)				,
+((	"zip"	)	,		"ZIP"	)			,
 ((	"gz","gzip","tgz"	)	,	"GZIP"	)		,
 ((	"bz2","bzip2","tbz2","tbz"),	"BZIP2"	)	,
 ((	"tar"	)	,		"TAR"	)				,
@@ -238,13 +249,88 @@ for ($i = 1; $i -le $cont1.Count; $i++)
   Write-Host $value
   $fExt = $value.Extension
   if ($fExt -ne $null)
-  { $fExt.TrimStart('.') }
-  if ($fExt -in $ArchsExts) #docx
+  { $fExt  = $fExt.TrimStart('.') }
+  if ($fExt -in $ArchsExts) 
   {
 
+	 $archContT=  & $u7z "l" "-slt"  $value.fullname  
+
+	  $aafiles=@();
+
+	  $fileL = $null;
+	  $pathFoundMode= $false;
+	  $dirFoundMode= $false;
+
+	  for($i = 0; $i -lt $archContT.Count; ++$i)
+	  {
+		  [string]$acString = $archContT[$i]
+		  if ($acString.Length -eq 0)
+		  {
+			  if ($fileL -ne $null) 
+			  {
+				$aafiles.Insert( $fileL)
+				 $pathFoundMode = $false;
+				 $dirFoundMode= $false;
+
+			}
+		  }	
+		  else {
+		  
+			  if (!$pathFoundMode)
+			  {
+			   $archParse	= $acString|Select-String -Pattern "Path = (.*)" 
+
+			  if ($archParse.Matches[0].Success)
+			  {
+				  $pathFoundMode = $true;
+
+		  if ($fileL -ne $null) 
+			  {
+			 $fileL = New-Object PSObject -Property @{ Path=$archParse.Matches[0].Groups[1].value; isdir=$false }
+			}
+				  }
+				  }
+			  elseif (!$dirFoundMode)
+			  {
+	   $archParse	= $acString|Select-String -Pattern "Directory = (.*)" 
+
+			  if ($archParse.Matches[0].Success)
+			  {
+				  $dirFoundMode = $true;
+ if ($fileL -ne $null) 
+			  {
+				  $fileL.isdir = ($archParse.Matches[0].Groups[1].value -eq "+")
+
+				  }
+				  else
+				  { $fileL } # never!
+				  }
+
+				  }
+
+		}
+		  $aafiles
+	  }
+	 $archCont	= $archContT|Select-String -Pattern "Path = (.*)" 
+
+	 $archCont
+	  $archCont2 = $archCont | Where-Object { $_.Matches[0].Success} | Select-Object -Skip 1 | select @{Name="FName";  Expression= {$_.Matches[0].Groups[1].value}}
+	
+	  $archCont2
+	  $TMPfullP = $value.fullname + "ext"  
+	  foreach ($archF in $archCont2)
+	  {
+		  $arPath =  $archF.FName
+		  $apSpl = Split-Path $arPath
+		 $apSplit =  $arPath.Split('\')
+$apSplit
+
+		 & $u7z  "e" $value.fullname  "-o$TMPfullP" "-i!$arPath" "-y"
+	 }
   }
   else
   {
+	  continue;
     if ($value.Extension -in ".rtf",".cdr",".jpg",".tif",".tiff",".doc",".docx",".indd")
     {
 
