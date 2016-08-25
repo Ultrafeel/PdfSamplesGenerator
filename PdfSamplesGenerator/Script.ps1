@@ -170,6 +170,32 @@ else
 { $targetP = Get-Location }
 
 $cont1 = Get-ChildItem $targetP
+
+
+$archs = 
+
+(	"7z	"	)	,	(	"7z"	)
+(	"xz	"	)	,	(	"XZ"	)
+(	"zip	"	)	,	(	"ZIP"	)
+(	"gz","gzip","tgz"	)	,	("GZIP"	)
+(	"bz2","bzip2","tbz2","tbz"),(	"BZIP2"	)
+(	"tar"	)	,	(	"TAR"	)
+(	"wim","swm"	)	,	(	"WIM"	)
+(	"lzma"	)	,	(	"LZMA"	)
+(	"rar"	)	,	(	"RAR"	)
+(	"cab"	)	,	(	"CAB"	)
+(	"arj"	)	,	(	"ARJ"	)
+(	"z","taz")	,	(	"Z"	)
+(	"cpio"	)	,	(	"CPIO"	)
+
+
+
+
+
+
+
+
+
 $Arch = $cont1 | Where Extension -In '.zip','.rar'
 #$nonArch = $cont1| Where-Object {$_.Extension -notin '.zip','.rar' }#,'.config'
 if ($Arch.LENGTH -eq 0)
@@ -204,3 +230,22 @@ else
 #    #filter and save content to a new file 
 #    $content | Where-Object {$_ -match 'step[49]'} | Set-Content ($_.BaseName + '_out.log')
 #}
+
+
+
+
+
+
+#( " 7z " ) , ( " 7z " )
+#( " xz " ) , ( " XZ " )
+#( " zip " ) , ( " ZIP " )
+#( " gz gzip tgz " ) , ( " GZIP " )
+#( " bz2 bzip2 tbz2 tbz " ) , ( " BZIP2 " )
+#( " tar " ) , ( " TAR " )
+#( " wim swm " ) , ( " WIM " )
+#( " lzma " ) , ( " LZMA " )
+#( " rar " ) , ( " RAR " )
+#( " cab " ) , ( " CAB " )
+#( " arj " ) , ( " ARJ " )
+#( " z taz " ) , ( " Z " )
+#( " cpio " ) , ( " CPIO " )
