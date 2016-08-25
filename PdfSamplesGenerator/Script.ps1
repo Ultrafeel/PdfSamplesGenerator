@@ -3,10 +3,29 @@
 #
 
 
+function printto
+{
+	param( [string]$file, [string]$printer)
 
-$printto = "d:\INSTALL\!office\Bullzip\files\printto.exe"
-$pdftk  ="C:\Program Files (x86)\PDFtk\bin\pdftk.exe"# = "pdftk"
+	if ($printer -ne $null)
+	{
+		Start-Process  –FilePath $file -ArgumentList $printer -Verb "printto"  -Wait
+	}
+	else
+	{
+		Start-Process  –FilePath $file  -Verb "print"   -Wait
 
+	}
+
+}
+$printto =  #= "d:\INSTALL\!office\Bullzip\files\printto.exe"
+$pdftk  =  Get-Command "pdftk" -ErrorAction SilentlyContinue
+if ($pdftk -eq $null)
+{ $pdftk  = "C:\Program Files (x86)\PDFtk\bin\pdftk.exe" }
+
+$u7z  =  Get-Command "7z" -ErrorAction SilentlyContinue
+if ($u7z -eq $null)
+{ $u7z  = "C:\Program Files (x86)\Universal Extractor\bin\7z.exe" }
 
 function WaitForFile ($file)
 {
@@ -74,7 +93,7 @@ function Print1 ($file)
   $samplesTargetDirName = "Образцы"
   $sampleSuffix = "_образец"
 	$watermarkText = "OBRAZEC" # "образец"
-	$samplesTarget = Join-Path $file.Directory $samplesTargetDirName
+	$samplesTarget = Join-Path -Path $($file.Directory) -ChildPath $samplesTargetDirName
   $sampleFileName = $file.basename + $sampleSuffix
 
 
@@ -127,9 +146,15 @@ function Print1 ($file)
   # ECHO "watermarktext=$watermarkText" >> "$settings"
  # ECHO >> "$settings"
   "$file.FullName"
-  "{$file.FullName}"
 
-  & $printto ("""" + $file.FullName + """") ("""" + $PRINTERNAME + """")
+  printto ("""" + $file.FullName + """") ("""" + $PRINTERNAME + """") -ErrorAction Continue -ErrorVariable ProcessError
+  #  Silently
+	If ($ProcessError) {
+
+	  echo  $file.FullName + "не имеет печатающей программы" 
+
+		return;
+	}
 
 
   # $printto.exe "in\example.rtf" "$PRINTERNAME"
@@ -154,8 +179,8 @@ function Print1 ($file)
 	
   if ($settingsBackFile -ne $null -and $settingsBackFile.Exists) #(Test-Path "$settings.back")
   { 
-	 # Remove-Item -Force $settings
-	 # move-Item -Force $settingsBackFile.FullName $SF1 
+	 Remove-Item -Force $settings
+	 move-Item -Force $settingsBackFile.FullName $SF1 
    }
   elseif (Test-Path $settingsBackFileName)
   {
@@ -174,50 +199,67 @@ $cont1 = Get-ChildItem $targetP
 
 $archs = 
 
-(	"7z	"	)	,	(	"7z"	)
-(	"xz	"	)	,	(	"XZ"	)
-(	"zip	"	)	,	(	"ZIP"	)
-(	"gz","gzip","tgz"	)	,	("GZIP"	)
-(	"bz2","bzip2","tbz2","tbz"),(	"BZIP2"	)
-(	"tar"	)	,	(	"TAR"	)
-(	"wim","swm"	)	,	(	"WIM"	)
-(	"lzma"	)	,	(	"LZMA"	)
-(	"rar"	)	,	(	"RAR"	)
-(	"cab"	)	,	(	"CAB"	)
-(	"arj"	)	,	(	"ARJ"	)
-(	"z","taz")	,	(	"Z"	)
-(	"cpio"	)	,	(	"CPIO"	)
+((	"7z	"	)	,		"7z"	) 				,
+((	"xz	"	)	,		"XZ"	)				,
+((	"zip	"	)	,		"ZIP"	)			,
+((	"gz","gzip","tgz"	)	,	"GZIP"	)		,
+((	"bz2","bzip2","tbz2","tbz"),	"BZIP2"	)	,
+((	"tar"	)	,		"TAR"	)				,
+((	"wim","swm"	)	,		"WIM"	),
+((	"lzma"	)	,		"LZMA"	)	 ,
+((	"rar"	)	,		"RAR"	)	 ,
+((	"cab"	)	,		"CAB"	)	 ,
+((	"arj"	)	,		"ARJ"	)	 ,
+((	"z","taz")	,		"Z"	)		 ,
+((	"cpio"	)	,		"CPIO"	)
+	
 
 
+$ArchsExts = ($archs | ForEach-Object { $_[0]})
 
-
-
-
-
-
-
-$Arch = $cont1 | Where Extension -In '.zip','.rar'
+ $cont1 | Where Extension -In '.zip','.rar'
 #$nonArch = $cont1| Where-Object {$_.Extension -notin '.zip','.rar' }#,'.config'
-if ($Arch.LENGTH -eq 0)
-{
 
-  foreach ($value in $cont1) {
 
-    if ($value.Extension -eq ".rtf")#docx
+ # foreach ($value in $cont1) 
+ For($i = 1; $i -le $cont1.count; $i++)
+{ 
+ 
+$value = $cont1[$i]
+Write-Progress -Activity “Generating samples” -status “ file $value” `
+-percentComplete ($i / $cont1.count*100)
+# $cont1 | Select name
+
+if ($value.Attributes -band  [System.IO.FileAttributes]::Directory)
+	  {
+		continue;  
+	  }
+   Write-Host $value.FullName
+    Write-Host $value
+	$fExt = $value.Extension
+	if ($fExt -ne $null)
+	{ $fExt.TrimStart('.') }
+    if ($fExt -in $ArchsExts)#docx
     {
-      "Wow"
+
+	}
+	else  
+	{
+		if ($value.Extension -in ".rtf", ".cdr", ".jpg", ".tif", ".tiff", ".doc", ".docx", ".indd" )
+		{
+
+			Print1 ($value)
+		}
+		elseif ($value.Extension -eq ".pdf")
+		{
+			Print1 ($value)
+		}
+		
       $value.FullPath
-      Print1 ($value)
       #break;
     }
-    Write-Host $value.FullName
-    Write-Host $value
-  }
-}
-else
-{
+   }
 
-}
 
 
 
