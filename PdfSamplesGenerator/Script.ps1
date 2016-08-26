@@ -22,11 +22,13 @@ function printto
     Start-Process –FilePath $file -Verb "print" -Wait -ErrorVariable err1
 
   }
-  if ($err1 -ne $null)
-  {
-    return $false
-  }
-  return $true;
+
+   return  $err1
+  #if ($err1 -ne $null)
+  #{
+  #  return $false
+  #}
+  #return $true;
 
 }
 $printto = #= "d:\INSTALL\!office\Bullzip\files\printto.exe"
@@ -40,9 +42,9 @@ if ($u7z -eq $null)
 
 function WaitForFile ($file)
 {
-  [int]$i = 10000
+  [int]$i = 1000
   for (; $i -gt 0 -and !(Test-Path $file); $i --)
-  { Start-Sleep 10 }
+  { Start-Sleep -Milliseconds 10 }
   return ($i -gt 0);
 }
 
@@ -83,7 +85,7 @@ function Print1 ($file, [string]$obrazcyParentDir)
     $LAPP = "$env:USERPROFILE\Local Settings\Application Data"
   }
   $settings = "$LAPP\PDF Writer\$PRINTERNAME\$SF1"
-  ECHO $settings
+#  ECHO $settings
   $settFile = $null
   $settingsBackFile = $null
   if (Test-Path "$settings")
@@ -128,7 +130,7 @@ function Print1 ($file, [string]$obrazcyParentDir)
   $outFile = ("$outFileS" + ".pdf")
 
   # %CD%\out\demo.pdf
-  ECHO "Save settings to \" $settings\""
+  #ECHO "Save settings to \" $settings\""
   #ECHO "[PDF Printer]" > "$settings"
   #ECHO "output=$outFile" 			 >> "$settings"
   #ECHO author=PdfSamplesGenerator 	>> "$settings"
@@ -162,13 +164,12 @@ function Print1 ($file, [string]$obrazcyParentDir)
 
   # ECHO "watermarktext=$watermarkText" >> "$settings"
   # ECHO >> "$settings"
-  "$file.FullName"
 
-  $ptSuccess = printto $file.FullName $PRINTERNAME
-  #  Silently-ErrorVariable ProcessError -ErrorAction Continue 
-  if (!$ptSuccess) {
+  $ptErr = printto $file.FullName $PRINTERNAME
+  #$ptSuccess  Silently-ErrorVariable ProcessError -ErrorAction Continue 
+  if ($ptErr -ne $null) {
 
-    ECHO $($file.FullName) + "не имеет печатающей программы"
+    ECHO ($($file.FullName) + "не имеет печатающей программы :"  + $ptErr.ToString())
 
     return;
   }
@@ -177,7 +178,8 @@ function Print1 ($file, [string]$obrazcyParentDir)
   # $printto.exe "in\example.rtf" "$PRINTERNAME"
   #  $ptERRORLEVEL = $lastexitcode
   # if ($ptERRORLEVEL -eq 0) $res11 = & $pdftk "$outFile" dump_data | Select-string -Pattern "PageMediaNumber: ([0-9]*)"
-  if (WaitForFile ($outFile))
+  do {
+	if (WaitForFile ($outFile))
   {
     $res11 = & $pdftk "$outFile" dump_data | Select-String -Pattern "PageMediaNumber: ([0-9]+)"
 
@@ -192,7 +194,9 @@ function Print1 ($file, [string]$obrazcyParentDir)
         Move-Item $outFileCut $outFile -Force
       }
     }
+	  break;
   }
+   } while(msgBoxRetryCancel("Принтер не отвечает!") -eq [System.Windows.Forms.DialogResult]::Retry)
 
   if ($settingsBackFile -ne $null -and $settingsBackFile.Exists) #(Test-Path "$settings.back")
   {
@@ -208,15 +212,15 @@ $docExtensions1 = ".rtf",".cdr",".jpg",".tif",".tiff",".doc",".docx",".indd"
 $docExtensions = $docExtensions1 + ".pdf"
 function AlgA_Iter
 {
-	params($value, $obrazcyParentDir)
+	param($value, $obrazcyParentDir)
 	if ($value.Extension -in $docExtensions1)
     {
 
-      Print1 ($value, $obrazcyParentDir)
+      Print1 $value $obrazcyParentDir
     }
     elseif ($value.Extension -eq ".pdf")
     {
-      Print1 ($value, $obrazcyParentDir)
+      Print1 $value $obrazcyParentDir
     }
 
     $value.FullPath
@@ -261,7 +265,7 @@ $ArchsExts = ($archs | ForEach-Object { $_[0] })
 
 
 # foreach ($value in $cont1) 
-for ($iF = 1; $iF -le $cont1.Count; $iF++)
+for ($iF = 0; $iF -lt $cont1.Count; $iF++)
 {
 
   $value = $cont1[$iF]
@@ -363,12 +367,17 @@ for ($iF = 1; $iF -le $cont1.Count; $iF++)
 		  cd $value.Directory
 		out-file	$TMPfiltFile -Encoding "utf8" -InputObject 	( ($docExtensions|% {"*" + $_}) -join "`n")  
 	 & $u7z "e" $value.Name "-o$TMPfullP" "-i@$TMPfiltFile" "-y"
+		 Remove-Item  $TMPfiltFile -Force
 		cd $oldWD
 		  Algs (Get-Item $TMPfullP)  $true  $value.Directory 
-		  Remove-Item $TMPfullP -Force
-		 Remove-Item  $TMPfiltFile -Force
+		  Remove-Item $TMPfullP -Force	-Recurse
 	  
 	  }
+	  else
+	  {
+		  
+	  }
+					
   <#  $archCont = $archContT | Select-String -Pattern "Path = (.*)"
 
     $archCont
@@ -389,8 +398,8 @@ for ($iF = 1; $iF -le $cont1.Count; $iF++)
   }
   else
   {
-	 
-    continue; #TODO
+	 if (!$algAForB)
+   { continue; }#TODO
     AlgA_Iter $value  $obrazcyParentDir 
     #break;
   }
