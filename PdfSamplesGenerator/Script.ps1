@@ -31,7 +31,7 @@ function printto
   #return $true;
 
 }
-$printto = #= "d:\INSTALL\!office\Bullzip\files\printto.exe"
+$printto =  "d:\INSTALL\!office\Bullzip\files\printto.exe"
 $pdftk = Get-Command "pdftk" -ErrorAction SilentlyContinue
 if ($pdftk -eq $null)
 { $pdftk = "C:\Program Files (x86)\PDFtk\bin\pdftk.exe" }
@@ -42,7 +42,7 @@ if ($u7z -eq $null)
 
 function WaitForFile ($file)
 {
-  [int]$i = 1000
+  [int]$i = 100
   for (; $i -gt 0 -and !(Test-Path $file); $i --)
   { Start-Sleep -Milliseconds 10 }
   return ($i -gt 0);
@@ -91,9 +91,9 @@ function Print1 ($file, [string]$obrazcyParentDir)
   if (Test-Path "$settings")
   {
     $settFile = (Get-Item $settings)
-    $settingsBackFileName = $SF1 + ".back"
-    $settingsBackFile = Join-Path $settFile.Directory $settingsBackFileName | Get-Item
-    Remove-Item $settingsBackFile.FullName -Force;
+    $settingsBackFileName = Join-Path $settFile.Directory ($SF1 + ".back" )
+    $settingsBackFile =  $settingsBackFileName | Get-Item -ErrorAction SilentlyContinue
+    Remove-Item $settingsBackFile -Force -ErrorAction SilentlyContinue;
     Move-Item $settFile.FullName $settingsBackFile.FullName -Force
     # Get-Item $settingsBackFile
     # rename-item $settFile $settingsBackFileName -Force
@@ -104,7 +104,7 @@ function Print1 ($file, [string]$obrazcyParentDir)
   }
   else
   {
-    #$settingsBackFileName = $SF1 + ".back"
+    #$settingsBackFileName = Join-Path $settFile.Directory ($SF1 + ".back" )
 
   }
   #(rename "$settings" "$SF1.back")
@@ -147,7 +147,7 @@ function Print1 ($file, [string]$obrazcyParentDir)
   showsettings=never
   showpdf=no
   watermarktext=$watermarkText
-  watermarkfontsize=70
+  watermarkfontsize=40
   watermarkrotation=c2c
   watermarkcolor=
   watermarkfontname=arial.ttf
@@ -156,7 +156,25 @@ function Print1 ($file, [string]$obrazcyParentDir)
   watermarkverticalposition=center
   watermarkhorizontalposition=center
   confirmoverwrite=no
+  showprogressfinished=yes
 "@
+
+# TODO: showprogress=yes
+  #
+	# confirmnewfolder=yes
+<#  suppresserrors=no
+    rememberlastfoldername=yes
+  openfolder=no
+  showsaveas=nofile
+
+  device=pdfwrite
+  textalphabits=4
+  graphicsalphabits=4
+  author=PdfSamplesGenerator
+  title=
+  subject=
+  keywords=	  #>
+
   #	>> "$settings"
   #PrintToPrinter=Foxit Reader PDF Printer
   #PrinterFirstPage=1
@@ -165,11 +183,23 @@ function Print1 ($file, [string]$obrazcyParentDir)
   # ECHO "watermarktext=$watermarkText" >> "$settings"
   # ECHO >> "$settings"
 
-  $ptErr = printto $file.FullName $PRINTERNAME
+  $ptErr = printto "`"$($file.FullName)`"" "`"$PRINTERNAME`""
   #$ptSuccess  Silently-ErrorVariable ProcessError -ErrorAction Continue 
-  if ($ptErr -ne $null) {
+ 
+  if (   i$settingsBackFile -ne $null -and $settingsBackFile.Exists) #(Test-Path "$settings.back")
+  {
+    Remove-Item -Force $settings
+    Move-Item -Force $settingsBackFile.FullName $SF1
+  }
+  elseif (Test-Path $settingsBackFileName)
+  {
+    Rename-Item -Force $settingsBackFileName $settfile.name
+  }
+	
 
-    ECHO ($($file.FullName) + "не имеет печатающей программы :"  + $ptErr.ToString())
+ if ($ptErr -ne $null) {
+
+    ECHO ("`"$($file.FullName)`"" + " не имеет печатающей программы :"  + $ptErr.ToString())
 
     return;
   }
@@ -186,7 +216,9 @@ function Print1 ($file, [string]$obrazcyParentDir)
     $numOfPages = ($res11.Matches[0].Groups[1].value)
     if ($numOfPages -gt 8)
     {
-      $outFileCut = ("$samplesTarget\$sampleFileName" + "C.pdf") #($outFile
+
+		#TODO: cut pdf first
+      $outFileCut = ("$samplesTarget\$sampleFileName" + ".pdf8cut") #($outFile
       & $pdftk "$outFile" cat 1-8 output $outFileCut verbose
       if (Test-Path $outFileCut)
       {
@@ -196,17 +228,9 @@ function Print1 ($file, [string]$obrazcyParentDir)
     }
 	  break;
   }
-   } while(msgBoxRetryCancel("Принтер не отвечает!") -eq [System.Windows.Forms.DialogResult]::Retry)
+   } while(msgBoxRetryCancel("Не конвертируется файл `"$($file.FullName)`" Нажмите `"отмена`" чтобы пропустить его  и Retry что бы подождать") -eq [System.Windows.Forms.DialogResult]::Retry)
 
-  if ($settingsBackFile -ne $null -and $settingsBackFile.Exists) #(Test-Path "$settings.back")
-  {
-    Remove-Item -Force $settings
-    Move-Item -Force $settingsBackFile.FullName $SF1
-  }
-  elseif (Test-Path $settingsBackFileName)
-  {
-    Rename-Item -Force $settingsBackFileName $settfile.name
-  }
+
 }
 $docExtensions1 = ".rtf",".cdr",".jpg",".tif",".tiff",".doc",".docx",".indd"
 $docExtensions = $docExtensions1 + ".pdf"
@@ -324,13 +348,19 @@ for ($iF = 0; $iF -lt $cont1.Count; $iF++)
 
             if ($fileL -eq $null)
             {
-              $fileL = New-Object PSObject -Property @{ Path = $archParse.Matches[0].Groups[1].value; isdir = $false }
+				$path1 = $archParse.Matches[0].Groups[1].value	
+				$pathAr1 = $path1.Split('\')
+				$fileL = New-Object PSObject -Property @{ Path = $path1; 
+					isdir = $false ;
+					pathAr =$pathAr1 ; 
+					depth = $pathAr1.Count }
             }
 			else
 			  {
 				   $fileL.Path = $archParse.Matches[0].Groups[1].value #never!
 			}
           }
+			#todo
 			$archParse
         }
         elseif (!$dirFoundMode)
@@ -352,10 +382,10 @@ for ($iF = 0; $iF -lt $cont1.Count; $iF++)
         }
 
       }
-     # $aafiles
     }
 
-
+     # $aafiles
+		  $aafiles[0].PathAr
 	# если папок нет
 	  if (($aafiles| Where-Object { $_.isdir }).Length -eq 0)
 	  {
@@ -374,9 +404,70 @@ for ($iF = 0; $iF -lt $cont1.Count; $iF++)
 	  
 	  }
 	  else
-	  {
-		  
-	  }
+	  {	  # $aafiles |  Measure-Object -Property depth  -
+		  $aFfiles	=	$aafiles | Where-Object { !$_.isdir -and ($_.depth -gt 1) }
+		   # 	| Sort -Property depth -Descending
+
+		  #первая, если вторая будет глубже - не подходит
+		   [int]$depth = 1
+		  $deepest_firstIndex  = 0
+		  for ($iA = 0; $iA -lt $aFfiles.Count; ++$iA)
+		  {	  
+			   $afile  = $aFfiles[$iA] ;
+			  if ($afile.depth -gt $depth)
+			  { 
+				  $depth	= $afile.depth
+				  $deepest_firstIndex =  $iA
+			  }
+			  elseif ($afile.depth -lt $depth)
+			  { break; }
+		  }
+		  $arTargdirSplit =  ($aFfiles[$deepest_firstIndex].pathAr | select -SkipLast 1 )
+		  $arTargdir = $arTargdirSplit	-join "\";
+		  $aFfilesTargFolder = ($aFfiles  | Where-Object { (Compare-Object -ReferenceObject ($_.pathAr |select -First ($depth-1) ) -DifferenceObject $arTargdirSplit -SyncWindow 0) -eq $null } )	# $_.path	-like  "$arTargdir\*"
+
+		 $pretendent1 = @();
+
+		do
+		  {
+		   foreach ( $mask in ("1_.pdf", "*.pdf" ))
+		  {
+
+			$pretendent1 = $aFfilesTargFolder | Where-Object { $_.pathAr[$_.pathAr.Count - 1] -like $mask}
+		
+		   if ( $pretendent1.Count -gt 0)  
+			{ break; }
+
+		}
+			if ( $pretendent1.Count -gt 0)  
+			{ break; }
+	 	  foreach ( $mask in ( ("*.jpg","*.jpeg" ), @("*.pdf"), @("*.tif"), @("*.cdr") ,
+			    @("telo..*.doc" , "telo..*.docx"), @("*.doc" , "*.docx")))
+		  {
+
+			$pretendent1 = $aFfilesTargFolder | Where-Object { 
+				$_.pathAr[$_.pathAr.Count - 1] -like $mask[0] -and 
+				( ($mask.Count -le 1 ) -or ($_.pathAr[$_.pathAr.Count - 1] -like $mask[1]) ) 
+			}
+
+		 }
+		} while($false)
+		  $logFile =  $MyInvocation.ScriptName + ".log"
+
+	   if ( $pretendent1.Count -gt 0)  
+		{ 
+		$pretendent1	 
+	
+
+		
+		}
+		else
+		  {
+
+
+		 }
+
+	  }	  
 					
   <#  $archCont = $archContT | Select-String -Pattern "Path = (.*)"
 
