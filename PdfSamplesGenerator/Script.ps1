@@ -266,8 +266,10 @@ function ExtractSpecified
 		 $TMPfullP =   $value.FullName + "ext"
 		  $oldWD = Get-Location
 		  cd $value.Directory
-		out-file	$TMPfiltFile -Encoding "utf8" -InputObject 	( ($wildCardFArray|% {"*" + $_}) -join "`n")  
-		 & $u7z "e" $value.Name "-o$TMPfullP" "-i@$TMPfiltFile" "-y"
+		out-file	$TMPfiltFile -Encoding "utf8" -InputObject 	( ($wildCardFArray|% {"*" + $_}) -join "`n") 
+
+		# Write-Debug  - set 	$DebugPreference = "Continue" 
+		 & $u7z "e" $value.Name "-o$TMPfullP" "-i@$TMPfiltFile" "-y"  |Write-Debug 
 		 Remove-Item  $TMPfiltFile -Force
 		cd $oldWD
 
@@ -472,7 +474,7 @@ for ($iF = 0; $iF -lt $cont1.Count; $iF++)
 			}
 		} while($false)
 		
-		$logFile =  (Get-Item $MyInvocation.ScriptName).Directory + ".log"
+		$logFile =  ((Get-Item $MyInvocation.ScriptName).Directory).FullName + ".log"
 
 
 	   if ( $pretendent1.Count -gt 0)  
@@ -486,7 +488,7 @@ for ($iF = 0; $iF -lt $cont1.Count; $iF++)
 		}
 		else
 		{
-			" архив `"$($value.Fullname)`" не содержит искомых файлов"  >> $logFile
+			"[$(get-date)] архив `"$($value.Fullname)`" не содержит искомых файлов"  >> $logFile
 
 		}
 
