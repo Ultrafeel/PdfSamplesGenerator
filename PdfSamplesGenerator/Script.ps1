@@ -257,6 +257,24 @@ if ($args.Count -gt 0 -and $args[0].length -ge 0)
 else
 { $targetP = Get-Location }
 
+
+function ExtractSpecified
+{
+	param($value, $wildCardFArray)
+	
+		$TMPfiltFile = "ExtList.extList"	#Get-Item ($value.Directory.ToString()+  [System.IO.Path]::GetTempFileName()
+		 $TMPfullP =   $value.FullName + "ext"
+		  $oldWD = Get-Location
+		  cd $value.Directory
+		out-file	$TMPfiltFile -Encoding "utf8" -InputObject 	( ($wildCardFArray|% {"*" + $_}) -join "`n")  
+		 & $u7z "e" $value.Name "-o$TMPfullP" "-i@$TMPfiltFile" "-y"
+		 Remove-Item  $TMPfiltFile -Force
+		cd $oldWD
+
+	 return $TMPfullP;
+
+}
+
 function Algs([string]$targetP1, [Boolean]$algAForB, $obrazcyParentDir)
 {
 	
@@ -293,8 +311,12 @@ for ($iF = 0; $iF -lt $cont1.Count; $iF++)
 {
 
   $value = $cont1[$iF]
-  Write-Progress -Activity “Generating samples” -Status “ file $value” `
+
+ if (!$algAForB)
+ {
+	 Write-Progress -Activity “Generating samples” -Status “ file $value” `
      -PercentComplete ($iF / $cont1.Count * 100)
+  }
   # $cont1 | Select name
 
   if ($value.Attributes -band [System.IO.FileAttributes]::Directory)
@@ -391,14 +413,8 @@ for ($iF = 0; $iF -lt $cont1.Count; $iF++)
 	  {
 		  
 		#[System.Reflection.Assembly]::LoadWithPartialName("System.IO.Path")
-		$TMPfiltFile = "ExtList.extList"	#Get-Item ($value.Directory.ToString()+  [System.IO.Path]::GetTempFileName()
-		 $TMPfullP =   $value.FullName + "ext"
-		  $oldWD = Get-Location
-		  cd $value.Directory
-		out-file	$TMPfiltFile -Encoding "utf8" -InputObject 	( ($docExtensions|% {"*" + $_}) -join "`n")  
-	 & $u7z "e" $value.Name "-o$TMPfullP" "-i@$TMPfiltFile" "-y"
-		 Remove-Item  $TMPfiltFile -Force
-		cd $oldWD
+		$wildCardFArray = $docExtensions
+		$TMPfullP =	ExtractSpecified  $value $wildCardFArray
 		  Algs (Get-Item $TMPfullP)  $true  $value.Directory 
 		  Remove-Item $TMPfullP -Force	-Recurse
 	  
@@ -446,26 +462,33 @@ for ($iF = 0; $iF -lt $cont1.Count; $iF++)
 		  {
 
 			$pretendent1 = $aFfilesTargFolder | Where-Object { 
-				$_.pathAr[$_.pathAr.Count - 1] -like $mask[0] -and 
-				( ($mask.Count -le 1 ) -or ($_.pathAr[$_.pathAr.Count - 1] -like $mask[1]) ) 
+				$_.pathAr[$_.pathAr.Count - 1] -like $mask[0]  	-or 
+				( ($mask.Count -le 1 ) 	-or 
+					($_.pathAr[$_.pathAr.Count - 1] -like $mask[1]) ) 
 			}
 
-		 }
+			if ( $pretendent1.Count -gt 0)  
+				{ break; }
+			}
 		} while($false)
-		  $logFile =  $MyInvocation.ScriptName + ".log"
+		
+		$logFile =  (Get-Item $MyInvocation.ScriptName).Directory + ".log"
+
 
 	   if ( $pretendent1.Count -gt 0)  
 		{ 
-		$pretendent1	 
+		  $wildCardFArray2 = $pretendent1 | % { $_.Path } 	 
 	
-
+		  $TMPfullP =	ExtractSpecified  $value $pretendent1
+		  Algs (Get-Item $TMPfullP)  $true  $value.Directory 
+		  Remove-Item $TMPfullP -Force	-Recurse
 		
 		}
 		else
-		  {
+		{
+			" архив `"$($value.Fullname)`" не содержит искомых файлов"  >> $logFile
 
-
-		 }
+		}
 
 	  }	  
 					
