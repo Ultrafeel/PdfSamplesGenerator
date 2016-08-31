@@ -13,12 +13,21 @@ function printto
 {
   param([string]$file,[string]$printer)
   #$err1;
+
+   [System.Diagnostics.ProcessStartInfo]$procForFile =  New-Object System.Diagnostics.ProcessStartInfo -Args $file   #System.Diagnostics.ProcessStartInfo
+
   if ($printer -ne $null)
-  {
+  {	
+ #  if ($procForFile.Verbs -notcontains "printto")
+	#{    return  "type notcontains 'printto'"		 }
+
     Start-Process –FilePath $file -ArgumentList $printer -Verb "printto" -Wait -ErrorVariable err1
   }
   else
   {
+	   #if ($procForFile.Verbs -notcontains "print")
+	   #{ return  "type notcontains 'print'"		   }
+
     Start-Process –FilePath $file -Verb "print" -Wait -ErrorVariable err1
 
   }
@@ -93,7 +102,8 @@ function Print1 ($file, [string]$obrazcyParentDir)
     $settFile = (Get-Item $settings)
     $settingsBackFileName = Join-Path $settFile.Directory ($SF1 + ".back" )
     $settingsBackFile =  $settingsBackFileName | Get-Item -ErrorAction SilentlyContinue
-    Remove-Item $settingsBackFile -Force -ErrorAction SilentlyContinue;
+	  if (Test-Path $settingsBackFile)
+    { Remove-Item $settingsBackFile -Force -ErrorAction SilentlyContinue; }
     Move-Item $settFile.FullName $settingsBackFile.FullName -Force
     # Get-Item $settingsBackFile
     # rename-item $settFile $settingsBackFileName -Force
@@ -262,8 +272,10 @@ function ExtractSpecified
 {
 	param($value, $wildCardFArray)
 	
+	$TMPfullP =   $value.FullName + "ext"
+	if ($wildCardFArray.Count -gt 1)
+	{
 		$TMPfiltFile = "ExtList.extList"	#Get-Item ($value.Directory.ToString()+  [System.IO.Path]::GetTempFileName()
-		 $TMPfullP =   $value.FullName + "ext"
 		  $oldWD = Get-Location
 		  cd $value.Directory
 		out-file	$TMPfiltFile -Encoding "utf8" -InputObject 	( ($wildCardFArray|% {"*" + $_}) -join "`n") 
@@ -272,6 +284,15 @@ function ExtractSpecified
 		 & $u7z "e" $value.Name "-o$TMPfullP" "-i@$TMPfiltFile" "-y"  |Write-Debug 
 		 Remove-Item  $TMPfiltFile -Force
 		cd $oldWD
+	}
+	else
+	{
+		$oldWD = Get-Location
+		cd $value.Directory
+		$wd = $wildCardFArray[0]
+		& $u7z "e" $value.Name "-o$TMPfullP" "-i!$wd" "-y" |Write-Debug 
+		cd $oldWD
+	}
 
 	 return $TMPfullP;
 
@@ -325,8 +346,8 @@ for ($iF = 0; $iF -lt $cont1.Count; $iF++)
   {
     continue;
   }
-  Write-Host $value.FullName
-  Write-Host $value
+#  Write-Host $value.FullName
+ # Write-Host $value
   $fExt = $value.Extension
   if ($fExt -ne $null)
   { $fExt = $fExt.TrimStart('.') }
@@ -384,9 +405,7 @@ for ($iF = 0; $iF -lt $cont1.Count; $iF++)
 				   $fileL.Path = $archParse.Matches[0].Groups[1].value #never!
 			}
           }
-			#todo
-			$archParse
-        }
+	    }
         elseif (!$dirFoundMode)
         {
           $archParse = $acString | Select-String -Pattern "Folder = (.*)"
@@ -442,9 +461,11 @@ for ($iF = 0; $iF -lt $cont1.Count; $iF++)
 		  }
 		  $arTargdirSplit =  ($aFfiles[$deepest_firstIndex].pathAr | select -SkipLast 1 )
 		  $arTargdir = $arTargdirSplit	-join "\";
-		  $aFfilesTargFolder = ($aFfiles  | Where-Object { (Compare-Object -ReferenceObject ($_.pathAr |select -First ($depth-1) ) -DifferenceObject $arTargdirSplit -SyncWindow 0) -eq $null } )	# $_.path	-like  "$arTargdir\*"
+		  $aFfilesTargFolder =($aFfiles  | Where-Object { (Compare-Object -ReferenceObject ($_.pathAr |select -First ($depth-1) ) -DifferenceObject $arTargdirSplit -SyncWindow 0) -eq $null } )	# $_.path	-like  "$arTargdir\*"
+		   # @($aFfiles[$deepest_firstIndex])
 
-		 $pretendent1 = @();
+		  	#currently  One file
+		$pretendent1 = @();
 
 		do
 		  {
@@ -479,9 +500,9 @@ for ($iF = 0; $iF -lt $cont1.Count; $iF++)
 
 	   if ( $pretendent1.Count -gt 0)  
 		{ 
-		  $wildCardFArray2 = $pretendent1 | % { $_.Path } 	 
+		  $wildCardFArray2 = @($pretendent1[0].Path ) # $pretendent1 |% { $_.Path } 	 
 	
-		  $TMPfullP =	ExtractSpecified  $value $pretendent1
+		  $TMPfullP =	ExtractSpecified  $value $wildCardFArray2
 		  Algs (Get-Item $TMPfullP)  $true  $value.Directory 
 		  Remove-Item $TMPfullP -Force	-Recurse
 		
