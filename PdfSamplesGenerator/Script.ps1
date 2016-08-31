@@ -1,6 +1,8 @@
 ﻿#
 # Script.ps1
 #
+		
+$logFile =  ((Get-Item $MyInvocation.ScriptName).Directory).FullName + ".log"
 
 function EchoA
 {
@@ -31,8 +33,41 @@ function printto
     Start-Process –FilePath $file -Verb "print" -Wait -ErrorVariable err1
 
   }
+	if ($err1 -ne $null)
+	{
+		$ftype1 = $null
+	   if ($file -like "*.jpg" -or $file -like "*.jpeg" -or $file -like "`"*.jpg`"" -or $file -like "`"*.jpeg`"")
+		{
+		   $ftype1 = "jpegfile"
+	    } 
+		elseif ($file -like "*.tif" -or $file -like "*.tiff" -or $file -like "`"*.tif`"" -or $file -like "`"*.tiff`"")
+	   {
+	      $ftype1 = "TIFImage.Document"
+	   }
+		if ( $ftype1 -ne $null)
+		{
+		 $reg1 = Get-Item -path Registry::HKEY_CLASSES_ROOT\$ftype1\shell\printto\Command
+		  if ($reg1 -ne $null)
+		  { $printt2 =	$reg1.Getvalue("").replace("`"%1`"",$file).replace("`"%2`"",$printer).replace("%3","").replace("%4","") 
+		  
+		#	 Start-Process  $printt2	-ErrorVariable err1
+			cmd /c $printt2
+
+			$ptERRORLEVEL = $lastexitcode
+			  if ($ptERRORLEVEL -ne 0)
+			  {$err1 = $ptERRORLEVEL }
+			  else
+			  {
+				  $err1 = $null
+			  }
+		  }
+		}
+	}
+
 
    return  $err1
+
+
   #if ($err1 -ne $null)
   #{
   #  return $false
@@ -102,9 +137,11 @@ function Print1 ($file, [string]$obrazcyParentDir)
     $settFile = (Get-Item $settings)
     $settingsBackFileName = Join-Path $settFile.Directory ($SF1 + ".back" )
     $settingsBackFile =  $settingsBackFileName | Get-Item -ErrorAction SilentlyContinue
-	  if (Test-Path $settingsBackFile)
-    { Remove-Item $settingsBackFile -Force -ErrorAction SilentlyContinue; }
-    Move-Item $settFile.FullName $settingsBackFile.FullName -Force
+	  if ($settingsBackFile -ne $null) # (Test-Path $settingsBackFileName)
+    { 
+		Remove-Item $settingsBackFile -Force -ErrorAction SilentlyContinue 
+	}
+    Move-Item $settFile.FullName $settingsBackFileName -Force
     # Get-Item $settingsBackFile
     # rename-item $settFile $settingsBackFileName -Force
 
@@ -166,6 +203,7 @@ function Print1 ($file, [string]$obrazcyParentDir)
   watermarkverticalposition=center
   watermarkhorizontalposition=center
   confirmoverwrite=no
+  autorotatepages=none
   showprogressfinished=yes
 "@
 
@@ -196,7 +234,7 @@ function Print1 ($file, [string]$obrazcyParentDir)
   $ptErr = printto "`"$($file.FullName)`"" "`"$PRINTERNAME`""
   #$ptSuccess  Silently-ErrorVariable ProcessError -ErrorAction Continue 
  
-  if (   i$settingsBackFile -ne $null -and $settingsBackFile.Exists) #(Test-Path "$settings.back")
+  if (  $settingsBackFile -ne $null -and $settingsBackFile.Exists) #(Test-Path "$settings.back")
   {
     Remove-Item -Force $settings
     Move-Item -Force $settingsBackFile.FullName $SF1
@@ -209,8 +247,9 @@ function Print1 ($file, [string]$obrazcyParentDir)
 
  if ($ptErr -ne $null) {
 
-    ECHO ("`"$($file.FullName)`"" + " не имеет печатающей программы :"  + $ptErr.ToString())
-
+    $errPrint = ("`"$($file.FullName)`"" + " не имеет печатающей программы :"  + $ptErr.ToString())
+	 Write-Warning $errPrint
+	 $errPrint	>>  $logFile
     return;
   }
 
@@ -494,8 +533,6 @@ for ($iF = 0; $iF -lt $cont1.Count; $iF++)
 				{ break; }
 			}
 		} while($false)
-		
-		$logFile =  ((Get-Item $MyInvocation.ScriptName).Directory).FullName + ".log"
 
 
 	   if ( $pretendent1.Count -gt 0)  
@@ -544,6 +581,13 @@ for ($iF = 0; $iF -lt $cont1.Count; $iF++)
 
 
 }
+
+ # $IMag = New-Object -ComObject "ImageMagickObject.MagickImage.1"
+ # $msgs = $IMag.Convert "logo:" -format "%m,%h,%w" info: 
+ # $msgs = $IMag.Convert("logo:","-format","%m,%h,%w","info:")	   $targetP\$($pd1)C.pdf
+	#			$pd1 =  "cc.pdf" # "ТЕОРИЯ АВТОМАТИЧЕСКОГО УПРАВЛЕНИЯ ДЛЯ «ЧАЙНИКОВ» tau_dummy.pdf"
+  #$IMag.Convert( "$targetP\$pd1[0-7]" , "-delete 8--1")
+
 
 Algs $targetP   $false  $null 
 
