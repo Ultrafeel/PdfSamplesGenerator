@@ -9,42 +9,42 @@ function EchoA
     "Arg $i is <$($args[$i])>"
   }
 }
-$logFile = $null		
-function Wait-KeyPress2( $keysToSkip)
- {
-	#Write-Host $prompt , $skipMessage	$prompt='Press "S" key to skip this',
-	
-	#$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-	 $doSleep = $false;
-	if ($Host.UI.RawUI.KeyAvailable)
-	{	
-    
-		 if (  $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") -notin $keysToSkip)
-	{	     $Host.UI.RawUI.FlushInputBuffer()
-		  $doSleep = $true;
-		}
-	}	
-	else
-		 { $doSleep = $true;	}
- 
-	if ($doSleep)
-	{
-	  Start-Sleep -milliseconds 100
-		return $false;
-	}
-	  else
-	{
-	   $Host.UI.RawUI.FlushInputBuffer()
-			return $true;
-	}
-	#do {
-		
-	#} until 
-		#		[console]::KeyAvailable
+$logFile = $null
+function Wait-KeyPress2 ($keysToSkip)
+{
+  #Write-Host $prompt , $skipMessage	$prompt='Press "S" key to skip this',
 
-#[console]::ReadKey("NoEcho,IncludeKeyDown")
-		# $Host.UI.RawUI.KeyAvailable
-		
+  #$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+  $doSleep = $false;
+  if ($Host.UI.RawUI.KeyAvailable)
+  {
+
+    if ($host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") -notin $keysToSkip)
+    { $Host.UI.RawUI.FlushInputBuffer()
+      $doSleep = $true;
+    }
+  }
+  else
+  { $doSleep = $true; }
+
+  if ($doSleep)
+  {
+    Start-Sleep -Milliseconds 100
+    return $false;
+  }
+  else
+  {
+    $Host.UI.RawUI.FlushInputBuffer()
+    return $true;
+  }
+  #do {
+
+  #} until 
+  #		[console]::KeyAvailable
+
+  #[console]::ReadKey("NoEcho,IncludeKeyDown")
+  # $Host.UI.RawUI.KeyAvailable
+
 }
 
 function printto
@@ -52,56 +52,56 @@ function printto
   param([string]$file,[string]$printer)
   #$err1;
 
-   [System.Diagnostics.ProcessStartInfo]$procForFile =  New-Object System.Diagnostics.ProcessStartInfo -Args $file   #System.Diagnostics.ProcessStartInfo
+  [System.Diagnostics.ProcessStartInfo]$procForFile = New-Object System.Diagnostics.ProcessStartInfo -Args $file #System.Diagnostics.ProcessStartInfo
 
   if ($printer -ne $null)
-  {	
- #  if ($procForFile.Verbs -notcontains "printto")
-	#{    return  "type notcontains 'printto'"		 }
+  {
+    #  if ($procForFile.Verbs -notcontains "printto")
+    #{    return  "type notcontains 'printto'"		 }
 
     Start-Process –FilePath $file -ArgumentList $printer -Verb "printto" -Wait -ErrorVariable err1
   }
   else
   {
-	   #if ($procForFile.Verbs -notcontains "print")
-	   #{ return  "type notcontains 'print'"		   }
+    #if ($procForFile.Verbs -notcontains "print")
+    #{ return  "type notcontains 'print'"		   }
 
     Start-Process –FilePath $file -Verb "print" -Wait -ErrorVariable err1
 
   }
-	if ($err1 -ne $null)
-	{
-		$ftype1 = $null
-	   if ($file -like "*.jpg" -or $file -like "*.jpeg" -or $file -like "`"*.jpg`"" -or $file -like "`"*.jpeg`"")
-		{
-		   $ftype1 = "jpegfile"
-	    } 
-		elseif ($file -like "*.tif" -or $file -like "*.tiff" -or $file -like "`"*.tif`"" -or $file -like "`"*.tiff`"")
-	   {
-	      $ftype1 = "TIFImage.Document"
-	   }
-		if ( $ftype1 -ne $null)
-		{
-		 $reg1 = Get-Item -path Registry::HKEY_CLASSES_ROOT\$ftype1\shell\printto\Command
-		  if ($reg1 -ne $null)
-		  { $printt2 =	$reg1.Getvalue("").replace("`"%1`"",$file).replace("`"%2`"",$printer).replace("%3","").replace("%4","") 
-		  
-		#	 Start-Process  $printt2	-ErrorVariable err1
-			cmd /c $printt2
+  if ($err1 -ne $null)
+  {
+    $ftype1 = $null
+    if ($file -like "*.jpg" -or $file -like "*.jpeg" -or $file -like "`"*.jpg`"" -or $file -like "`"*.jpeg`"")
+    {
+      $ftype1 = "jpegfile"
+    }
+    elseif ($file -like "*.tif" -or $file -like "*.tiff" -or $file -like "`"*.tif`"" -or $file -like "`"*.tiff`"")
+    {
+      $ftype1 = "TIFImage.Document"
+    }
+    if ($ftype1 -ne $null)
+    {
+      $reg1 = Get-Item -Path Registry::HKEY_CLASSES_ROOT\$ftype1\shell\printto\Command
+      if ($reg1 -ne $null)
+      { $printt2 = $reg1.Getvalue("").replace("`"%1`"",$file).replace("`"%2`"",$printer).replace("%3","").replace("%4","")
 
-			$ptERRORLEVEL = $lastexitcode
-			  if ($ptERRORLEVEL -ne 0)
-			  {$err1 = $ptERRORLEVEL }
-			  else
-			  {
-				  $err1 = $null
-			  }
-		  }
-		}
-	}
+        #	 Start-Process  $printt2	-ErrorVariable err1
+        cmd /c $printt2
+
+        $ptERRORLEVEL = $lastexitcode
+        if ($ptERRORLEVEL -ne 0)
+        { $err1 = $ptERRORLEVEL }
+        else
+        {
+          $err1 = $null
+        }
+      }
+    }
+  }
 
 
-   return  $err1
+  return $err1
 
 
   #if ($err1 -ne $null)
@@ -111,7 +111,7 @@ function printto
   #return $true;
 
 }
-$printto =  "d:\INSTALL\!office\Bullzip\files\printto.exe"
+$printto = "d:\INSTALL\!office\Bullzip\files\printto.exe"
 
 $pdftk = Get-Command "pdftk" -ErrorAction SilentlyContinue
 if ($pdftk -eq $null)
@@ -144,16 +144,16 @@ function msgBoxRetryCancel ($x)
 }
 
 #directory to process
-function Print1 ($file, [string]$obrazcyParentDir)
+function Print1 ($file,[string]$obrazcyParentDir)
 {
-	if ($obrazcyParentDir -eq $null)
-	{
-		$obrazcyParentDir = $file.Directory
-	}
+  if ($obrazcyParentDir -eq $null)
+  {
+    $obrazcyParentDir = $file.Directory
+  }
   # Set environment variables used by the batch file
 
   $PRINTERNAMe = "Bullzip PDF Printer"
- # $PRINTERNAMe
+  # $PRINTERNAMe
   # PDF Writer - bioPDF
 
   # Create settings \ runonce.ini
@@ -166,18 +166,18 @@ function Print1 ($file, [string]$obrazcyParentDir)
     $LAPP = "$env:USERPROFILE\Local Settings\Application Data"
   }
   $settings = "$LAPP\PDF Writer\$PRINTERNAME\$SF1"
-#  ECHO $settings
+  #  ECHO $settings
   $settFile = $null
   $settingsBackFile = $null
   if (Test-Path "$settings")
   {
     $settFile = (Get-Item $settings)
-    $settingsBackFileName = Join-Path $settFile.Directory ($SF1 + ".back" )
-    $settingsBackFile =  $settingsBackFileName | Get-Item -ErrorAction SilentlyContinue
-	  if ($settingsBackFile -ne $null) # (Test-Path $settingsBackFileName)
-    { 
-		Remove-Item $settingsBackFile -Force -ErrorAction SilentlyContinue 
-	}
+    $settingsBackFileName = Join-Path ($settFile.Directory) ($SF1 + ".back")
+    $settingsBackFile = $settingsBackFileName | Get-Item -ErrorAction SilentlyContinue
+    if ($settingsBackFile -ne $null) # (Test-Path $settingsBackFileName)
+    {
+      Remove-Item $settingsBackFile -Force -ErrorAction SilentlyContinue
+    }
     Move-Item $settFile.FullName $settingsBackFileName -Force
     # Get-Item $settingsBackFile
     # rename-item $settFile $settingsBackFileName -Force
@@ -244,10 +244,10 @@ function Print1 ($file, [string]$obrazcyParentDir)
   showprogressfinished=yes
 "@
 
-# TODO: showprogress=yes
+  # TODO: showprogress=yes
   #
-	# confirmnewfolder=yes
-<#  suppresserrors=no
+  # confirmnewfolder=yes
+  <#  suppresserrors=no
     rememberlastfoldername=yes
   openfolder=no
   showsaveas=nofile
@@ -270,24 +270,24 @@ function Print1 ($file, [string]$obrazcyParentDir)
 
   $ptErr = printto "`"$($file.FullName)`"" "`"$PRINTERNAME`""
   #$ptSuccess  Silently-ErrorVariable ProcessError -ErrorAction Continue 
- 
-  if (  $settingsBackFile -ne $null -and $settingsBackFile.Exists) #(Test-Path "$settings.back")
+
+  if ($settingsBackFile -ne $null -and $settingsBackFile.Exists) #(Test-Path "$settings.back")
   {
     Remove-Item -Force $settings
     Move-Item -Force $settingsBackFile.FullName $SF1
   }
   elseif (Test-Path $settingsBackFileName)
   {
-	Remove-Item  -Force $settfile
+    Remove-Item -Force $settfile
     Move-Item -Force $settingsBackFileName $settfile.name
   }
-	
 
- if ($ptErr -ne $null) {
 
-    $errPrint = ("`"$($file.FullName)`"" + " не имеет печатающей программы :"  + $ptErr.ToString())
-	 Write-Warning $errPrint
-	 "[$(get-date)] $errPrint"	>>  $logFile
+  if ($ptErr -ne $null) {
+
+    $errPrint = ("`"$($file.FullName)`"" + " не имеет печатающей программы :" + $ptErr.ToString())
+    Write-Warning $errPrint
+    "[$(get-date)] $errPrint" >> $logFile
     return;
   }
 
@@ -295,50 +295,50 @@ function Print1 ($file, [string]$obrazcyParentDir)
   # $printto.exe "in\example.rtf" "$PRINTERNAME"
   #  $ptERRORLEVEL = $lastexitcode
   # if ($ptERRORLEVEL -eq 0) $res11 = & $pdftk "$outFile" dump_data | Select-string -Pattern "PageMediaNumber: ([0-9]*)"
- 
-  for ($iW = 0;$true; $iW++) 
-	{
-	if (Test-Path ($outFile))
+
+  for ($iW = 0; $true; $iW++)
   {
-    $res11 = & $pdftk "$outFile" dump_data | Select-String -Pattern "PageMediaNumber: ([0-9]+)"
-
-    $numOfPages = ($res11.Matches[0].Groups[1].value)
-    if ($numOfPages -gt 8)
+    if (Test-Path ($outFile))
     {
+      $res11 = & $pdftk "$outFile" dump_data | Select-String -Pattern "PageMediaNumber: ([0-9]+)"
 
-		#TODO: cut pdf first
-      $outFileCut = ("$samplesTarget\$sampleFileName" + ".pdf8cut") #($outFile
-      & $pdftk "$outFile" cat 1-8 output $outFileCut verbose
-      if (Test-Path $outFileCut)
+      $numOfPages = ($res11.Matches[0].Groups[1].value)
+      if ($numOfPages -gt 8)
       {
-        Remove-Item $outFile -Force;
-        Move-Item $outFileCut $outFile -Force
+
+        #TODO: cut pdf first
+        $outFileCut = ("$samplesTarget\$sampleFileName" + ".pdf8cut") #($outFile
+        & $pdftk "$outFile" cat 1-8 output $outFileCut verbose
+        if (Test-Path $outFileCut)
+        {
+          Remove-Item $outFile -Force;
+          Move-Item $outFileCut $outFile -Force
+        }
+      }
+      if ($iW -gt 0)
+      {
+        Write-Host "Конвертация файла `"$($file.FullName)`" завершилась"
+      }
+      break;
+    }
+    else
+    {
+      $keysToSkip = 's'
+      if ($iW -eq 0)
+      {
+        Write-Host "Конвертация файла `"$($file.FullName)`" затянулась. Нажмите `"S`" чтобы пропустить его"
+        Start-Sleep -Milliseconds 100
+        continue
+
+      }
+      if (Wait-KeyPress2 $keysToSkip)
+      {
+        Write-Host "Конвертация файла `"$($file.FullName)`" пропущена"
+        break;
       }
     }
-	  if ($iW -gt 0)
-		{  
-			Write-Host "Конвертация файла `"$($file.FullName)`" завершилась"
-		}
-	  break;
-  }
-	else
-	{
-		$keysToSkip = 's'
-		if ($iW -eq 0)
-		{  
-			Write-Host "Конвертация файла `"$($file.FullName)`" затянулась. Нажмите `"S`" чтобы пропустить его"
-			Start-Sleep -milliseconds 100
-			continue
 
-		}
-		if (Wait-KeyPress2 $keysToSkip)
-		{	
-			Write-Host "Конвертация файла `"$($file.FullName)`" пропущена"
-			break; 
-		}
-	}
-
-   }# for 
+  } # for 
 
 
 }
@@ -364,23 +364,23 @@ $archs =
 
 function AlgA_Iter
 {
-	param($value, $obrazcyParentDir)
-	if ($value.Extension -in $docExtensions1)
-    {
+  param($value,$obrazcyParentDir)
+  if ($value.Extension -in $docExtensions1)
+  {
 
-      Print1 $value $obrazcyParentDir
-    }
-    elseif ($value.Extension -eq ".pdf")
-    {
-      Print1 $value $obrazcyParentDir
-    }
+    Print1 $value $obrazcyParentDir
+  }
+  elseif ($value.Extension -eq ".pdf")
+  {
+    Print1 $value $obrazcyParentDir
+  }
 
-    $value.FullPath | Write-Debug
+  $value.FullPath | Write-Debug
 }
 
 if ($args.Count -gt 0 -and $args[0].length -ge 0)
-{ 
-	$targetP = $args[0]
+{
+  $targetP = $args[0]
 }
 else
 { $targetP = Get-Location }
@@ -388,236 +388,236 @@ else
 
 function ExtractSpecified
 {
-	param($value, $wildCardFArray)
-	
-	$TMPfullP =   $value.FullName + "ext"
-	if ($wildCardFArray.Count -gt 1)
-	{
-		$TMPfiltFile = "ExtList.extList"	#Get-Item ($value.Directory.ToString()+  [System.IO.Path]::GetTempFileName()
-		  $oldWD = Get-Location
-		  cd $value.Directory
-		out-file	$TMPfiltFile -Encoding "utf8" -InputObject 	( ($wildCardFArray|% {"*" + $_}) -join "`n") 
+  param($value,$wildCardFArray)
 
-		# Write-Debug  - set 	$DebugPreference = "Continue" 
-		 & $u7z "e" $value.Name "-o$TMPfullP" "-i@$TMPfiltFile" "-y"  |Write-Debug 
-		 Remove-Item  $TMPfiltFile -Force
-		cd $oldWD
-	}
-	else
-	{
-		$oldWD = Get-Location
-		cd $value.Directory
-		$wd = $wildCardFArray[0]
-		& $u7z "e" $value.Name "-o$TMPfullP" "-i!$wd" "-y" |Write-Debug 
-		cd $oldWD
-	}
+  $TMPfullP = $value.FullName + "ext"
+  if ($wildCardFArray.Count -gt 1)
+  {
+    $TMPfiltFile = "ExtList.extList" #Get-Item ($value.Directory.ToString()+  [System.IO.Path]::GetTempFileName()
+    $oldWD = Get-Location
+    cd $value.Directory
+    Out-File $TMPfiltFile -Encoding "utf8" -InputObject (($wildCardFArray | % { "*" + $_ }) -join "`n")
 
-	 return $TMPfullP;
+    # Write-Debug  - set 	$DebugPreference = "Continue" 
+    & $u7z "e" $value.name "-o$TMPfullP" "-i@$TMPfiltFile" "-y" | Write-Debug
+    Remove-Item $TMPfiltFile -Force
+    cd $oldWD
+  }
+  else
+  {
+    $oldWD = Get-Location
+    cd $value.Directory
+    $wd = $wildCardFArray[0]
+    & $u7z "e" $value.name "-o$TMPfullP" "-i!$wd" "-y" | Write-Debug
+    cd $oldWD
+  }
+
+  return $TMPfullP;
 
 }
 
-function Algs([string]$targetP1, [Boolean]$algAForB, $obrazcyParentDir)
+function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
 {
-	$logFile =  ((Get-Item $MyInvocation.ScriptName).Directory).FullName + ".log"
+  $logFile = ((Get-Item $MyInvocation.ScriptName).Directory).FullName + ".log"
 
 
-	[Boolean]$algAOnly = $algAForB
+  [boolean]$algAOnly = $algAForB
 
-$cont1 = Get-ChildItem $targetP1
-
-
+  $cont1 = Get-ChildItem $targetP1
 
 
-$ArchsExts = ($archs | ForEach-Object { $_[0] })
-
-#$nonArch = $cont1| Where-Object {$_.Extension -notin '.zip','.rar' }#,'.config'
 
 
-# foreach ($value in $cont1) 
-for ($iF = 0; $iF -lt $cont1.Count; $iF++)
-{
+  $ArchsExts = ($archs | ForEach-Object { $_[0] })
 
-  $value = $cont1[$iF]
+  #$nonArch = $cont1| Where-Object {$_.Extension -notin '.zip','.rar' }#,'.config'
 
- if (!$algAForB)
- {
-	 Write-Progress -Activity “Generating samples” -Status “ file $value” `
-     -PercentComplete ($iF / $cont1.Count * 100)
-  }
-  # $cont1 | Select name
 
-  if ($value.Attributes -band [System.IO.FileAttributes]::Directory)
-  {
-    continue;
-  }
-#  Write-Host $value.FullName
- # Write-Host $value
-  $fExt = $value.Extension
-  if ($fExt -ne $null)
-  { $fExt = $fExt.TrimStart('.') }
-  if ($fExt -in $ArchsExts)
+  # foreach ($value in $cont1) 
+  for ($iF = 0; $iF -lt $cont1.Count; $iF++)
   {
 
-	  #algB
-	   if ($algAOnly)
-	  {
-		  continue;
-	}
-    $archContT = & $u7z "l" "-slt" $value.FullName
+    $value = $cont1[$iF]
 
-    $aafiles = {@()}.Invoke(); #System.Collections.ObjectModel.Collection`1[System.Management.Automation.PSObject]
-
-    $fileL = $null;
-    $pathFoundMode = $false;
-    $dirFoundMode = $false;
-
-    for ($i = 0; $i -lt $archContT.Count;++ $i)
+    if (!$algAForB)
     {
-      [string]$acString = $archContT[$i]
-      if ($acString.length -eq 0)
+      Write-Progress -Activity “Generating samples” -Status “ file $value” `
+         -PercentComplete ($iF / $cont1.Count * 100)
+    }
+    # $cont1 | Select name
+
+    if ($value.Attributes -band [System.IO.FileAttributes]::Directory)
+    {
+      continue;
+    }
+    #  Write-Host $value.FullName
+    # Write-Host $value
+    $fExt = $value.Extension
+    if ($fExt -ne $null)
+    { $fExt = $fExt.TrimStart('.') }
+    if ($fExt -in $ArchsExts)
+    {
+
+      #algB
+      if ($algAOnly)
       {
-        if ($fileL -ne $null -and $dirFoundMode)
+        continue;
+      }
+      $archContT = & $u7z "l" "-slt" $value.FullName
+
+      $aafiles = { @() }.Invoke(); #System.Collections.ObjectModel.Collection`1[System.Management.Automation.PSObject]
+
+      $fileL = $null;
+      $pathFoundMode = $false;
+      $dirFoundMode = $false;
+
+      for ($i = 0; $i -lt $archContT.Count;++ $i)
+      {
+        [string]$acString = $archContT[$i]
+        if ($acString.length -eq 0)
         {
-          $aafiles.Add($fileL)
-        }
+          if ($fileL -ne $null -and $dirFoundMode)
+          {
+            $aafiles.Add($fileL)
+          }
           $pathFoundMode = $false;
           $dirFoundMode = $false;
 
-		$fileL = $null
+          $fileL = $null
+        }
+        else {
+
+          if (!$pathFoundMode)
+          {
+            $archParse = $acString | Select-String -Pattern "Path = (.*)"
+
+            if ($archParse -ne $null -and $archParse.Matches[0].Success)
+            {
+              $pathFoundMode = $true;
+
+              if ($fileL -eq $null)
+              {
+                $path1 = $archParse.Matches[0].Groups[1].value
+                $pathAr1 = $path1.Split('\')
+                $fileL = New-Object PSObject -Property @{ Path = $path1;
+                  isdir = $false;
+                  pathAr = $pathAr1;
+                  depth = $pathAr1.Count }
+              }
+              else
+              {
+                $fileL.Path = $archParse.Matches[0].Groups[1].value #never!
+              }
+            }
+          }
+          elseif (!$dirFoundMode)
+          {
+            $archParse = $acString | Select-String -Pattern "Folder = (.*)"
+
+            if ($archParse -ne $null -and $archParse.Matches[0].Success)
+            {
+              $dirFoundMode = $true;
+              if ($fileL -ne $null)
+              {
+                $fileL.isdir = ($archParse.Matches[0].Groups[1].value -eq "+")
+
+              }
+              else
+              { $fileL } # never!
+            }
+
+          }
+
+        }
       }
-      else {
 
-        if (!$pathFoundMode)
+      # $aafiles
+      $aafiles[0].pathAr
+      # если папок нет
+      if (($aafiles | Where-Object { $_.isdir }).length -eq 0)
+      {
+
+        #[System.Reflection.Assembly]::LoadWithPartialName("System.IO.Path")
+        $wildCardFArray = $docExtensions
+        $TMPfullP = ExtractSpecified $value $wildCardFArray
+        Algs (Get-Item $TMPfullP) $true $value.Directory
+        Remove-Item $TMPfullP -Force -Recurse
+
+      }
+      else
+      { # $aafiles |  Measure-Object -Property depth  -
+        $aFfiles = $aafiles | Where-Object { !$_.isdir -and ($_.depth -gt 1) }
+        # 	| Sort -Property depth -Descending
+
+        #первая, если вторая будет глубже - не подходит
+        [int]$depth = 1
+        $deepest_firstIndex = 0
+        for ($iA = 0; $iA -lt $aFfiles.Count;++ $iA)
         {
-          $archParse = $acString | Select-String -Pattern "Path = (.*)"
-
-          if ($archParse -ne $null -and $archParse.Matches[0].Success)
+          $afile = $aFfiles[$iA];
+          if ($afile.depth -gt $depth)
           {
-            $pathFoundMode = $true;
-
-            if ($fileL -eq $null)
-            {
-				$path1 = $archParse.Matches[0].Groups[1].value	
-				$pathAr1 = $path1.Split('\')
-				$fileL = New-Object PSObject -Property @{ Path = $path1; 
-					isdir = $false ;
-					pathAr =$pathAr1 ; 
-					depth = $pathAr1.Count }
-            }
-			else
-			  {
-				   $fileL.Path = $archParse.Matches[0].Groups[1].value #never!
-			}
+            $depth = $afile.depth
+            $deepest_firstIndex = $iA
           }
-	    }
-        elseif (!$dirFoundMode)
+          elseif ($afile.depth -lt $depth)
+          { break; }
+        }
+        $arTargdirSplit = ($aFfiles[$deepest_firstIndex].pathAr | select -SkipLast 1)
+        $arTargdir = $arTargdirSplit -join "\";
+        $aFfilesTargFolder = ($aFfiles | Where-Object { (Compare-Object -ReferenceObject ($_.pathAr | select -First ($depth - 1)) -DifferenceObject $arTargdirSplit -SyncWindow 0) -eq $null }) # $_.path	-like  "$arTargdir\*"
+        # @($aFfiles[$deepest_firstIndex])
+
+        #currently  One file
+        $pretendent1 = @();
+
+        do
         {
-          $archParse = $acString | Select-String -Pattern "Folder = (.*)"
-
-          if ($archParse -ne $null -and $archParse.Matches[0].Success)
+          foreach ($mask in ("1_.pdf","*.pdf"))
           {
-            $dirFoundMode = $true;
-            if ($fileL -ne $null)
-            {
-              $fileL.isdir = ($archParse.Matches[0].Groups[1].value -eq "+")
 
-            }
-            else
-            { $fileL } # never!
+            $pretendent1 = $aFfilesTargFolder | Where-Object { $_.pathAr[$_.pathAr.Count - 1] -like $mask }
+
+            if ($pretendent1.Count -gt 0)
+            { break; }
+
           }
+          if ($pretendent1.Count -gt 0)
+          { break; }
+          foreach ($mask in (("*.jpg","*.jpeg"),@( "*.pdf"),@( "*.tif"),@( "*.cdr"),
+              @( "telo..*.doc","telo..*.docx"),@( "*.doc","*.docx")))
+          {
+
+            $pretendent1 = $aFfilesTargFolder | Where-Object {
+              $_.pathAr[$_.pathAr.Count - 1] -like $mask[0] -or
+              (($mask.Count -le 1) -or
+                ($_.pathAr[$_.pathAr.Count - 1] -like $mask[1]))
+            }
+
+            if ($pretendent1.Count -gt 0)
+            { break; }
+          }
+        } while ($false)
+
+
+        if ($pretendent1.Count -gt 0)
+        {
+          $wildCardFArray2 = @( $pretendent1[0].Path) # $pretendent1 |% { $_.Path } 	 
+
+          $TMPfullP = ExtractSpecified $value $wildCardFArray2
+          Algs (Get-Item $TMPfullP) $true $value.Directory
+          Remove-Item $TMPfullP -Force -Recurse
+
+        }
+        else
+        {
+          "[$(get-date)] архив `"$($value.Fullname)`" не содержит искомых файлов" >> $logFile
 
         }
 
       }
-    }
 
-     # $aafiles
-		  $aafiles[0].PathAr
-	# если папок нет
-	  if (($aafiles| Where-Object { $_.isdir }).Length -eq 0)
-	  {
-		  
-		#[System.Reflection.Assembly]::LoadWithPartialName("System.IO.Path")
-		$wildCardFArray = $docExtensions
-		$TMPfullP =	ExtractSpecified  $value $wildCardFArray
-		  Algs (Get-Item $TMPfullP)  $true  $value.Directory 
-		  Remove-Item $TMPfullP -Force	-Recurse
-	  
-	  }
-	  else
-	  {	  # $aafiles |  Measure-Object -Property depth  -
-		  $aFfiles	=	$aafiles | Where-Object { !$_.isdir -and ($_.depth -gt 1) }
-		   # 	| Sort -Property depth -Descending
-
-		  #первая, если вторая будет глубже - не подходит
-		   [int]$depth = 1
-		  $deepest_firstIndex  = 0
-		  for ($iA = 0; $iA -lt $aFfiles.Count; ++$iA)
-		  {	  
-			   $afile  = $aFfiles[$iA] ;
-			  if ($afile.depth -gt $depth)
-			  { 
-				  $depth	= $afile.depth
-				  $deepest_firstIndex =  $iA
-			  }
-			  elseif ($afile.depth -lt $depth)
-			  { break; }
-		  }
-		  $arTargdirSplit =  ($aFfiles[$deepest_firstIndex].pathAr | select -SkipLast 1 )
-		  $arTargdir = $arTargdirSplit	-join "\";
-		  $aFfilesTargFolder =($aFfiles  | Where-Object { (Compare-Object -ReferenceObject ($_.pathAr |select -First ($depth-1) ) -DifferenceObject $arTargdirSplit -SyncWindow 0) -eq $null } )	# $_.path	-like  "$arTargdir\*"
-		   # @($aFfiles[$deepest_firstIndex])
-
-		  	#currently  One file
-		$pretendent1 = @();
-
-		do
-		  {
-		   foreach ( $mask in ("1_.pdf", "*.pdf" ))
-		  {
-
-			$pretendent1 = $aFfilesTargFolder | Where-Object { $_.pathAr[$_.pathAr.Count - 1] -like $mask}
-		
-		   if ( $pretendent1.Count -gt 0)  
-			{ break; }
-
-		}
-			if ( $pretendent1.Count -gt 0)  
-			{ break; }
-	 	  foreach ( $mask in ( ("*.jpg","*.jpeg" ), @("*.pdf"), @("*.tif"), @("*.cdr") ,
-			    @("telo..*.doc" , "telo..*.docx"), @("*.doc" , "*.docx")))
-		  {
-
-			$pretendent1 = $aFfilesTargFolder | Where-Object { 
-				$_.pathAr[$_.pathAr.Count - 1] -like $mask[0]  	-or 
-				( ($mask.Count -le 1 ) 	-or 
-					($_.pathAr[$_.pathAr.Count - 1] -like $mask[1]) ) 
-			}
-
-			if ( $pretendent1.Count -gt 0)  
-				{ break; }
-			}
-		} while($false)
-
-
-	   if ( $pretendent1.Count -gt 0)  
-		{ 
-		  $wildCardFArray2 = @($pretendent1[0].Path ) # $pretendent1 |% { $_.Path } 	 
-	
-		  $TMPfullP =	ExtractSpecified  $value $wildCardFArray2
-		  Algs (Get-Item $TMPfullP)  $true  $value.Directory 
-		  Remove-Item $TMPfullP -Force	-Recurse
-		
-		}
-		else
-		{
-			"[$(get-date)] архив `"$($value.Fullname)`" не содержит искомых файлов"  >> $logFile
-
-		}
-
-	  }	  
-					
-  <#  $archCont = $archContT | Select-String -Pattern "Path = (.*)"
+      <#  $archCont = $archContT | Select-String -Pattern "Path = (.*)"
 
     $archCont
     $archCont2 = $archCont | Where-Object { $_.Matches[0].Success } | Select-Object -Skip 1 | select @{ name = "FName"; Expression = { $_.Matches[0].Groups[1].value } }
@@ -634,27 +634,27 @@ for ($iF = 0; $iF -lt $cont1.Count; $iF++)
       & $u7z "e" $value.FullName "-o$TMPfullP" "-i!$arPath" "-y"
     }
 	  #>
+    }
+    else
+    {
+      if (!$algAForB)
+      { continue; } #TODO
+      AlgA_Iter $value $obrazcyParentDir
+      #break;
+    }
   }
-  else
-  {
-	 if (!$algAForB)
-   { continue; }#TODO
-    AlgA_Iter $value  $obrazcyParentDir 
-    #break;
-  }
+
+
 }
 
-
-}
-
- # $IMag = New-Object -ComObject "ImageMagickObject.MagickImage.1"
- # $msgs = $IMag.Convert "logo:" -format "%m,%h,%w" info: 
- # $msgs = $IMag.Convert("logo:","-format","%m,%h,%w","info:")	   $targetP\$($pd1)C.pdf
-	#			$pd1 =  "cc.pdf" # "ТЕОРИЯ АВТОМАТИЧЕСКОГО УПРАВЛЕНИЯ ДЛЯ «ЧАЙНИКОВ» tau_dummy.pdf"
-  #$IMag.Convert( "$targetP\$pd1[0-7]" , "-delete 8--1")
+# $IMag = New-Object -ComObject "ImageMagickObject.MagickImage.1"
+# $msgs = $IMag.Convert "logo:" -format "%m,%h,%w" info: 
+# $msgs = $IMag.Convert("logo:","-format","%m,%h,%w","info:")	   $targetP\$($pd1)C.pdf
+#			$pd1 =  "cc.pdf" # "ТЕОРИЯ АВТОМАТИЧЕСКОГО УПРАВЛЕНИЯ ДЛЯ «ЧАЙНИКОВ» tau_dummy.pdf"
+#$IMag.Convert( "$targetP\$pd1[0-7]" , "-delete 8--1")
 
 
-Algs $targetP   $false  $null 
+Algs $targetP $false $null
 
 #Foreach-Object {
 #    $content = Get-Content $_.FullName
