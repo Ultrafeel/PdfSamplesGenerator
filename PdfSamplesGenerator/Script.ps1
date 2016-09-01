@@ -222,7 +222,10 @@ function Print1 ($file,[string]$obrazcyParentDir)
   #ECHO showpdf=no >> "$settings"
 
   # Out-File "$settings" -Append -Encoding "unicode" -InputObject 	"$watermarkText"
-
+  if (Test-Path $outFile)
+  {
+    Remove-Item -Force $outFile
+  }
   # Нельзя добавлять в конце пробелы!!
   Out-File "$settings" -Encoding "unicode" -InputObject @"
 [PDF Printer]
@@ -300,15 +303,16 @@ function Print1 ($file,[string]$obrazcyParentDir)
   {
     if (Test-Path ($outFile))
     {
-      $res11 = & $pdftk "$outFile" dump_data | Select-String -Pattern "PageMediaNumber: ([0-9]+)"
+		$dumpData1 = 	& $pdftk "$outFile" dump_data 
+      $res11 = $dumpData1 | Select-String -Pattern "NumberOfPages: ([0-9]+)" #"PageMediaNumber: ([0-9]+)"
 
       $numOfPages = ($res11.Matches[0].Groups[1].value)
-      if ($numOfPages -gt 8)
+      if ([int]$numOfPages -gt 8)
       {
 
         #TODO: cut pdf first
         $outFileCut = ("$samplesTarget\$sampleFileName" + ".pdf8cut") #($outFile
-        & $pdftk "$outFile" cat 1-8 output $outFileCut verbose
+        & $pdftk "$outFile" cat 1-8 output $outFileCut verbose dont_ask
         if (Test-Path $outFileCut)
         {
           Remove-Item $outFile -Force;
@@ -375,7 +379,7 @@ function AlgA_Iter
     Print1 $value $obrazcyParentDir
   }
 
-  $value.FullPath | Write-Debug
+  $value.FullName | Write-Debug
 }
 
 if ($args.Count -gt 0 -and $args[0].length -ge 0)
