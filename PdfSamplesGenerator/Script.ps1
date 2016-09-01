@@ -9,7 +9,9 @@ function EchoA
     "Arg $i is <$($args[$i])>"
   }
 }
+
 $logFile = $null
+
 function Wait-KeyPress2 ($keysToSkip)
 {
   #Write-Host $prompt , $skipMessage	$prompt='Press "S" key to skip this',
@@ -116,6 +118,15 @@ $printto = "d:\INSTALL\!office\Bullzip\files\printto.exe"
 $pdftk = Get-Command "pdftk" -ErrorAction SilentlyContinue
 if ($pdftk -eq $null)
 { $pdftk = "C:\Program Files (x86)\PDFtk\bin\pdftk.exe" }
+
+function Get-PdfNumOfPages([string]$outFile)
+{
+	  $dumpData1 = 	& $pdftk "$outFile" dump_data 
+      $res11 = $dumpData1 | Select-String -Pattern "NumberOfPages: ([0-9]+)" #"PageMediaNumber: ([0-9]+)"
+
+      $numOfPages = ($res11.Matches[0].Groups[1].value)
+	return  [int]$numOfPages  
+ }
 
 $u7z = Get-Command "7z" -ErrorAction SilentlyContinue
 if ($u7z -eq $null)
@@ -299,15 +310,12 @@ function Print1 ($file,[string]$obrazcyParentDir)
   #  $ptERRORLEVEL = $lastexitcode
   # if ($ptERRORLEVEL -eq 0) $res11 = & $pdftk "$outFile" dump_data | Select-string -Pattern "PageMediaNumber: ([0-9]*)"
 
-  for ([int]$iW = 0; $true; ++)$iW
+  for ([int]$iW = 0; $true; ++$iW)
   {
     if (Test-Path ($outFile))
     {
-		$dumpData1 = 	& $pdftk "$outFile" dump_data 
-      $res11 = $dumpData1 | Select-String -Pattern "NumberOfPages: ([0-9]+)" #"PageMediaNumber: ([0-9]+)"
-
-      $numOfPages = ($res11.Matches[0].Groups[1].value)
-      if ([int]$numOfPages -gt 8)
+		$numOfPages = Get-PdfNumOfPages $outFile
+		   if ([int]$numOfPages -gt 8)
       {
 
         #TODO: cut pdf first
