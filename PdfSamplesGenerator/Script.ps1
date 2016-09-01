@@ -1,8 +1,6 @@
 ﻿#
 # Script.ps1
 #
-		
-$logFile =  ((Get-Item $MyInvocation.ScriptName).Directory).FullName + ".log"
 
 function EchoA
 {
@@ -11,6 +9,44 @@ function EchoA
     "Arg $i is <$($args[$i])>"
   }
 }
+$logFile = $null		
+function Wait-KeyPress2( $keysToSkip)
+ {
+	#Write-Host $prompt , $skipMessage	$prompt='Press "S" key to skip this',
+	
+	#$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+	 $doSleep = $false;
+	if ($Host.UI.RawUI.KeyAvailable)
+	{	
+    
+		 if (  $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") -notin $keysToSkip)
+	{	     $Host.UI.RawUI.FlushInputBuffer()
+		  $doSleep = $true;
+		}
+	}	
+	else
+		 { $doSleep = $true;	}
+ 
+	if ($doSleep)
+	{
+	  Start-Sleep -milliseconds 100
+		return $false;
+	}
+	  else
+	{
+	   $Host.UI.RawUI.FlushInputBuffer()
+			return $true;
+	}
+	#do {
+		
+	#} until 
+		#		[console]::KeyAvailable
+
+#[console]::ReadKey("NoEcho,IncludeKeyDown")
+		# $Host.UI.RawUI.KeyAvailable
+		
+}
+
 function printto
 {
   param([string]$file,[string]$printer)
@@ -76,6 +112,7 @@ function printto
 
 }
 $printto =  "d:\INSTALL\!office\Bullzip\files\printto.exe"
+
 $pdftk = Get-Command "pdftk" -ErrorAction SilentlyContinue
 if ($pdftk -eq $null)
 { $pdftk = "C:\Program Files (x86)\PDFtk\bin\pdftk.exe" }
@@ -116,7 +153,7 @@ function Print1 ($file, [string]$obrazcyParentDir)
   # Set environment variables used by the batch file
 
   $PRINTERNAMe = "Bullzip PDF Printer"
-  $PRINTERNAMe
+ # $PRINTERNAMe
   # PDF Writer - bioPDF
 
   # Create settings \ runonce.ini
@@ -241,7 +278,8 @@ function Print1 ($file, [string]$obrazcyParentDir)
   }
   elseif (Test-Path $settingsBackFileName)
   {
-    Rename-Item -Force $settingsBackFileName $settfile.name
+	Remove-Item  -Force $settfile
+    Move-Item -Force $settingsBackFileName $settfile.name
   }
 	
 
@@ -249,7 +287,7 @@ function Print1 ($file, [string]$obrazcyParentDir)
 
     $errPrint = ("`"$($file.FullName)`"" + " не имеет печатающей программы :"  + $ptErr.ToString())
 	 Write-Warning $errPrint
-	 $errPrint	>>  $logFile
+	 "[$(get-date)] $errPrint"	>>  $logFile
     return;
   }
 
@@ -257,8 +295,10 @@ function Print1 ($file, [string]$obrazcyParentDir)
   # $printto.exe "in\example.rtf" "$PRINTERNAME"
   #  $ptERRORLEVEL = $lastexitcode
   # if ($ptERRORLEVEL -eq 0) $res11 = & $pdftk "$outFile" dump_data | Select-string -Pattern "PageMediaNumber: ([0-9]*)"
-  do {
-	if (WaitForFile ($outFile))
+ 
+  for ($iW = 0;$true; $iW++) 
+	{
+	if (Test-Path ($outFile))
   {
     $res11 = & $pdftk "$outFile" dump_data | Select-String -Pattern "PageMediaNumber: ([0-9]+)"
 
@@ -275,14 +315,53 @@ function Print1 ($file, [string]$obrazcyParentDir)
         Move-Item $outFileCut $outFile -Force
       }
     }
+	  if ($iW -gt 0)
+		{  
+			Write-Host "Конвертация файла `"$($file.FullName)`" завершилась"
+		}
 	  break;
   }
-   } while(msgBoxRetryCancel("Не конвертируется файл `"$($file.FullName)`" Нажмите `"отмена`" чтобы пропустить его  и Retry что бы подождать") -eq [System.Windows.Forms.DialogResult]::Retry)
+	else
+	{
+		$keysToSkip = 's'
+		if ($iW -eq 0)
+		{  
+			Write-Host "Конвертация файла `"$($file.FullName)`" затянулась. Нажмите `"S`" чтобы пропустить его"
+			Start-Sleep -milliseconds 100
+			continue
+
+		}
+		if (Wait-KeyPress2 $keysToSkip)
+		{	
+			Write-Host "Конвертация файла `"$($file.FullName)`" пропущена"
+			break; 
+		}
+	}
+
+   }# for 
 
 
 }
 $docExtensions1 = ".rtf",".cdr",".jpg",".tif",".tiff",".doc",".docx",".indd"
 $docExtensions = $docExtensions1 + ".pdf"
+
+
+$archs =
+
+(("7z"),"7z"),
+(("xz"),"XZ"),
+(("zip"),"ZIP"),
+(("gz","gzip","tgz"),"GZIP"),
+(("bz2","bzip2","tbz2","tbz"),"BZIP2"),
+(("tar"),"TAR"),
+(("wim","swm"),"WIM"),
+(("lzma"),"LZMA"),
+(("rar"),"RAR"),
+(("cab"),"CAB"),
+(("arj"),"ARJ"),
+(("z","taz"),"Z"),
+(("cpio"),"CPIO")
+
 function AlgA_Iter
 {
 	param($value, $obrazcyParentDir)
@@ -296,7 +375,7 @@ function AlgA_Iter
       Print1 $value $obrazcyParentDir
     }
 
-    $value.FullPath
+    $value.FullPath | Write-Debug
 }
 
 if ($args.Count -gt 0 -and $args[0].length -ge 0)
@@ -339,27 +418,13 @@ function ExtractSpecified
 
 function Algs([string]$targetP1, [Boolean]$algAForB, $obrazcyParentDir)
 {
-	
+	$logFile =  ((Get-Item $MyInvocation.ScriptName).Directory).FullName + ".log"
+
+
 	[Boolean]$algAOnly = $algAForB
 
 $cont1 = Get-ChildItem $targetP1
 
-
-$archs =
-
-(("7z"),"7z"),
-(("xz"),"XZ"),
-(("zip"),"ZIP"),
-(("gz","gzip","tgz"),"GZIP"),
-(("bz2","bzip2","tbz2","tbz"),"BZIP2"),
-(("tar"),"TAR"),
-(("wim","swm"),"WIM"),
-(("lzma"),"LZMA"),
-(("rar"),"RAR"),
-(("cab"),"CAB"),
-(("arj"),"ARJ"),
-(("z","taz"),"Z"),
-(("cpio"),"CPIO")
 
 
 
