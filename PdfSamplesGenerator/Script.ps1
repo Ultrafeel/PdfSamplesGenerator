@@ -299,7 +299,7 @@ function Print1 ($file,[string]$obrazcyParentDir)
   #  $ptERRORLEVEL = $lastexitcode
   # if ($ptERRORLEVEL -eq 0) $res11 = & $pdftk "$outFile" dump_data | Select-string -Pattern "PageMediaNumber: ([0-9]*)"
 
-  for ($iW = 0; $true; $iW++)
+  for ([int]$iW = 0; $true; ++)$iW
   {
     if (Test-Path ($outFile))
     {
@@ -312,7 +312,8 @@ function Print1 ($file,[string]$obrazcyParentDir)
 
         #TODO: cut pdf first
         $outFileCut = ("$samplesTarget\$sampleFileName" + ".pdf8cut") #($outFile
-        & $pdftk "$outFile" cat 1-8 output $outFileCut verbose dont_ask
+					# Write-Debug  $DebugPreference = "Continue" 
+        & $pdftk "$outFile" cat 1-8 output $outFileCut verbose dont_ask | Write-Debug
         if (Test-Path $outFileCut)
         {
           Remove-Item $outFile -Force;
@@ -352,19 +353,20 @@ $docExtensions = $docExtensions1 + ".pdf"
 
 $archs =
 
-(("7z"),"7z"),
-(("xz"),"XZ"),
 (("zip"),"ZIP"),
-(("gz","gzip","tgz"),"GZIP"),
-(("bz2","bzip2","tbz2","tbz"),"BZIP2"),
-(("tar"),"TAR"),
-(("wim","swm"),"WIM"),
-(("lzma"),"LZMA"),
 (("rar"),"RAR"),
-(("cab"),"CAB"),
+(("7z"),"7z"),
 (("arj"),"ARJ"),
-(("z","taz"),"Z"),
-(("cpio"),"CPIO")
+(("gz","gzip","tgz"),"GZIP"),
+(("bz2","bzip2","tbz2","tbz"),"BZIP2")
+#,
+#(("xz"),"XZ"),
+#(("tar"),"TAR"),
+#(("wim","swm"),"WIM"),
+#(("lzma"),"LZMA"),
+#(("cab"),"CAB"),
+#(("z","taz"),"Z"),
+#(("cpio"),"CPIO")
 
 function AlgA_Iter
 {
