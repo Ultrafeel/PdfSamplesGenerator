@@ -199,7 +199,7 @@ function Print1 ($file,[string]$obrazcyParentDir)
   }
   else
   {
-    #$settingsBackFileName = Join-Path $settFile.Directory ($SF1 + ".back" )
+    $settingsBackFileName = Join-Path $settFile.Directory ($SF1 + ".back" )
 
   }
   #(rename "$settings" "$SF1.back")
