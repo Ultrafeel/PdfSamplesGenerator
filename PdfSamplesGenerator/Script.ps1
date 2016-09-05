@@ -9,7 +9,7 @@
 #$gh1.pdftk()
 ##$gh1 = New-Object  PdfWriter.PdfInternal.Ghostscript
 
-
+$waterMPDF = "d:\!Work\Pdf_c\Образец_ВодЗнак.pdf"
 function EchoA
 {
   for ($i = 0; $i -lt $args.length; $i++)
@@ -61,7 +61,7 @@ function printto
 {
   param([string]$file,[string]$printer)
   #$err1;
-
+	#TODO
   [System.Diagnostics.ProcessStartInfo]$procForFile = New-Object System.Diagnostics.ProcessStartInfo -Args $file #System.Diagnostics.ProcessStartInfo
 
   if ($printer -ne $null)
@@ -144,7 +144,7 @@ function Cut_PdfTo8 ($inFile, $outFileCut )
 
  					# Write-Debug  $DebugPreference = "Continue" 
         & $pdftk "$inFile" cat 1-8 output $outFileCut verbose dont_ask | Write-Debug
-        return $true
+        return $?
       }
       return $false
 }
@@ -226,8 +226,31 @@ function Print1 ($file,[string]$obrazcyParentDir)
     Remove-Item -Force $outFile
   }
 
+	$outFileCut = $null
+  if($file.Extension -eq ".pdf")
+
+  {
+
+        $outFileCut = ("$outFileS" + ".8cut.pdf") #($outFile
 
 
+        $cutRes =  Cut_PdfTo8 $file.FullName $outFileCut 
+        if ($cutRes -and (Test-Path $outFileCut))
+        {
+          Remove-Item $outFile -Force;
+        
+        # not work & $pdftk $outFileCut multistamp "`"$waterMPDF`"" output $outFile
+        #  Move-Item $outFileCut $outFile -Force
+
+
+        }
+        else
+        {
+          
+         write-warning " Cannot cut $outFile"
+         return
+        } 
+  }
   #------------------------------
 
   # Set environment variables used by the batch file
@@ -303,6 +326,15 @@ function Print1 ($file,[string]$obrazcyParentDir)
   showprogressfinished=yes
 "@
 
+ if (Test-Path	$waterMPDF)
+	{
+
+  Out-File "$settings" -Append -Encoding "unicode" -InputObject @"
+  superimpose=$waterMPDF
+  superimposeresolution=
+  superimposelayer=bottom
+"@
+}
   # TODO: showprogress=yes
   #
   # confirmnewfolder=yes
@@ -327,19 +359,17 @@ function Print1 ($file,[string]$obrazcyParentDir)
   # ECHO "watermarktext=$watermarkText" >> "$settings"
   # ECHO >> "$settings"
 
-  $ptErr = printto "`"$($file.FullName)`"" "`"$PRINTERNAME`""
+	$fileToPrint = $null
+	if ($outFileCut -eq $null)
+	{
+		$fileToPrint = $($file.FullName)
+	}
+	else
+	{
+		$fileToPrint = $($outFileCut)
+	}
+  $ptErr = printto "`"$fileToPrint`"" "`"$PRINTERNAME`""
   #$ptSuccess  Silently-ErrorVariable ProcessError -ErrorAction Continue 
-
-  if ($settingsBackFile -ne $null -and $settingsBackFile.Exists) #(Test-Path "$settings.back")
-  {
-    Remove-Item -Force $settings
-    Move-Item -Force $settingsBackFile.FullName $SF1
-  }
-  elseif (Test-Path $settingsBackFileName)
-  {
-    Remove-Item -Force $settfile
-    Move-Item -Force $settingsBackFileName $settfile.name
-  }
 
 
   if ($ptErr -ne $null) {
@@ -347,10 +377,9 @@ function Print1 ($file,[string]$obrazcyParentDir)
     $errPrint = ("`"$($file.FullName)`"" + " не имеет печатающей программы :" + $ptErr.ToString())
     Write-Warning $errPrint
     "[$(get-date)] $errPrint" >> $logFile
-    return;
-  }
-
-
+   }
+   else
+   {
   # $printto.exe "in\example.rtf" "$PRINTERNAME"
   #  $ptERRORLEVEL = $lastexitcode
   # if ($ptERRORLEVEL -eq 0) $res11 = & $pdftk "$outFile" dump_data | Select-string -Pattern "PageMediaNumber: ([0-9]*)"
@@ -395,6 +424,22 @@ function Print1 ($file,[string]$obrazcyParentDir)
     }
 
   } # for 
+ } #else 
+	if ($outFileCut -ne $null)
+	{
+	 Remove-Item $outFileCut -Force;
+	}
+
+  if ($settingsBackFile -ne $null -and $settingsBackFile.Exists) #(Test-Path "$settings.back")
+  {
+    Remove-Item -Force $settings
+    Move-Item -Force $settingsBackFile.FullName $SF1
+  }
+  elseif (Test-Path $settingsBackFileName)
+  {
+    Remove-Item -Force $settfile
+    Move-Item -Force $settingsBackFileName $settfile.name
+  }
 
 
 } #Print1
@@ -590,7 +635,7 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
       }
 
       # $aafiles
-      $aafiles[0].pathAr
+      out-host $aafiles[0].pathAr
       # если папок нет
       if (($aafiles | Where-Object { $_.isdir }).length -eq 0)
       {
