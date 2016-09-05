@@ -155,9 +155,21 @@ function Cut_PdfTo8 ($inFile, $outFileCut )
 }
 
 
-$u7z = Get-Command "7z" -ErrorAction SilentlyContinue
+#TODO reorder
+
 if ($u7z -eq $null)
-{ $u7z = "C:\Program Files (x86)\Universal Extractor\bin\7z.exe" }
+{ $u7z = Get-Command "7z" -ErrorAction SilentlyContinue }
+if ($u7z -eq $null)
+{ 
+	$reg1 = Get-Item -Path Registry::HKEY_CURRENT_USER\SOFTWARE\7-Zip
+    if ($reg1 -ne $null)
+    { $u7z = Get-Command ( $reg1.Getvalue("Path") +  "\7z.exe") }
+
+}
+if ($u7z -eq $null)
+{ $u7z = Get-Command "C:\Program Files (x86)\Universal Extractor\bin\7z.exe" }
+if ($u7z -eq $null)
+{ Write-Warning "No 7z!!!" }
 
 function WaitForFile ($file)
 {
