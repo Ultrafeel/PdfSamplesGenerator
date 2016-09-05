@@ -165,9 +165,15 @@ function msgBoxRetryCancel ($x)
 #directory to process
 function Print1 ($file,[string]$obrazcyParentDir)
 {
+
+  $checkExistance = $false;
   if ($obrazcyParentDir -eq $null)
   {
     $obrazcyParentDir = $file.Directory
+  }
+  else
+  {
+    $checkExistance = $true
   }
   # Set environment variables used by the batch file
 
@@ -231,7 +237,15 @@ function Print1 ($file,[string]$obrazcyParentDir)
 
   $outFileS = "$samplesTarget\$sampleFileName"
   $outFile = ("$outFileS" + ".pdf")
-
+  if ($checkExistance)
+  {
+    $iOF =  1;
+    while (Test-Path $outFile)
+    {
+      $outFile = ("$outFileS(" + $iOF.ToString() + ").pdf")
+      ++$iOF;
+    }
+  }
   # %CD%\out\demo.pdf
   #ECHO "Save settings to \" $settings\""
   #ECHO "[PDF Printer]" > "$settings"
@@ -327,7 +341,7 @@ function Print1 ($file,[string]$obrazcyParentDir)
       {
 
         #TODO: cut pdf first
-        $outFileCut = ("$samplesTarget\$sampleFileName" + ".pdf8cut") #($outFile
+        $outFileCut = ("$outFileS" + ".pdf8cut") #($outFile
 					# Write-Debug  $DebugPreference = "Continue" 
         & $pdftk "$outFile" cat 1-8 output $outFileCut verbose dont_ask | Write-Debug
         if (Test-Path $outFileCut)
@@ -418,7 +432,7 @@ function ExtractSpecified
     $TMPfiltFile = "ExtList.extList" #Get-Item ($value.Directory.ToString()+  [System.IO.Path]::GetTempFileName()
     $oldWD = Get-Location
     cd $value.Directory
-    Out-File $TMPfiltFile -Encoding "utf8" -InputObject (($wildCardFArray | % { "*" + $_ }) -join "`n")
+    Out-File $TMPfiltFile -Force -Encoding "utf8" -InputObject (($wildCardFArray | % { "*" + $_ }) -join "`n")
 
     # Write-Debug  - set 	$DebugPreference = "Continue" 
     & $u7z "e" $value.name "-o$TMPfullP" "-i@$TMPfiltFile" "-y" | Write-Debug
