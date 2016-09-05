@@ -175,6 +175,47 @@ function Print1 ($file,[string]$obrazcyParentDir)
   {
     $checkExistance = $true
   }
+
+  $samplesTargetDirName = "Образцы"
+  $sampleSuffix = "_образец"
+  $watermarkText = "OBRAZEC" # "образец"
+
+  $samplesTarget = Join-Path -Path $obrazcyParentDir -ChildPath $samplesTargetDirName
+  $sampleFileName = $file.basename + $sampleSuffix
+
+
+  while (!(Test-Path $samplesTarget))
+  {
+    $msg = "Нет папки `“$samplesTargetDirName`” по пути `“$obrazcyParentDir`”"
+    $OUTPUT = msgBoxRetryCancel ($msg)
+    if ($OUTPUT -eq [System.Windows.Forms.DialogResult]::Cancel)
+    {
+      throw $msg;
+    }
+  }
+
+  $outFileS = "$samplesTarget\$sampleFileName"
+  $outFile = ("$outFileS" + ".pdf")
+  if ($checkExistance)
+  {
+    $iOF =  1;
+    while (Test-Path $outFile)
+    {
+      $outFile = ("$outFileS(" + $iOF.ToString() + ").pdf")
+      ++$iOF;
+    }
+  }
+
+  # Out-File "$settings" -Append -Encoding "unicode" -InputObject 	"$watermarkText"
+  if (Test-Path $outFile)
+  {
+    Remove-Item -Force $outFile
+  }
+
+
+
+  #------------------------------
+
   # Set environment variables used by the batch file
 
   $PRINTERNAMe = "Bullzip PDF Printer"
@@ -217,35 +258,7 @@ function Print1 ($file,[string]$obrazcyParentDir)
 
   }
   #(rename "$settings" "$SF1.back")
-  $samplesTargetDirName = "Образцы"
-  $sampleSuffix = "_образец"
-  $watermarkText = "OBRAZEC" # "образец"
-
-  $samplesTarget = Join-Path -Path $obrazcyParentDir -ChildPath $samplesTargetDirName
-  $sampleFileName = $file.basename + $sampleSuffix
-
-
-  while (!(Test-Path $samplesTarget))
-  {
-    $msg = "Нет папки `“$samplesTargetDirName`” по пути `“$obrazcyParentDir`”"
-    $OUTPUT = msgBoxRetryCancel ($msg)
-    if ($OUTPUT -eq [System.Windows.Forms.DialogResult]::Cancel)
-    {
-      throw $msg;
-    }
-  }
-
-  $outFileS = "$samplesTarget\$sampleFileName"
-  $outFile = ("$outFileS" + ".pdf")
-  if ($checkExistance)
-  {
-    $iOF =  1;
-    while (Test-Path $outFile)
-    {
-      $outFile = ("$outFileS(" + $iOF.ToString() + ").pdf")
-      ++$iOF;
-    }
-  }
+  
   # %CD%\out\demo.pdf
   #ECHO "Save settings to \" $settings\""
   #ECHO "[PDF Printer]" > "$settings"
@@ -254,11 +267,6 @@ function Print1 ($file,[string]$obrazcyParentDir)
   #ECHO showsettings=never 			>> "$settings"
   #ECHO showpdf=no >> "$settings"
 
-  # Out-File "$settings" -Append -Encoding "unicode" -InputObject 	"$watermarkText"
-  if (Test-Path $outFile)
-  {
-    Remove-Item -Force $outFile
-  }
   # Нельзя добавлять в конце пробелы!!
   Out-File "$settings" -Encoding "unicode" -InputObject @"
 [PDF Printer]
@@ -336,7 +344,7 @@ function Print1 ($file,[string]$obrazcyParentDir)
   {
     if (Test-Path ($outFile))
     {
-		$numOfPages = Get-PdfNumOfPages $outFile
+		  $numOfPages = Get-PdfNumOfPages $outFile
 		   if ([int]$numOfPages -gt 8)
       {
 
