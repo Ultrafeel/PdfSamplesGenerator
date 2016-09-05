@@ -8,6 +8,9 @@
 #$gh1 = New-Object  Bullzip.PdfWriter.ComPdfInternal
 #$gh1.pdftk()
 ##$gh1 = New-Object  PdfWriter.PdfInternal.Ghostscript
+#$ErrorActionPreference =  Inquire #"SilentlyContinue" 
+
+
 
 $waterMPDF = "d:\!Work\Pdf_c\Образец_ВодЗнак.pdf"
 function EchoA
@@ -61,57 +64,59 @@ function printto
 {
   param([string]$file,[string]$printer)
   #$err1;
-	#TODO
-  [System.Diagnostics.ProcessStartInfo]$procForFile = New-Object System.Diagnostics.ProcessStartInfo -Args $file #System.Diagnostics.ProcessStartInfo
 
+  [System.Diagnostics.ProcessStartInfo]$startInfo = New-Object System.Diagnostics.ProcessStartInfo #-Args $file #System.Diagnostics.ProcessStartInfo
+
+
+	$startInfo.FileName = $file
+	$startInfo.Arguments = @($printer)
+
+	#$startInfo.RedirectStandardOutput = $true
+	$startInfo.CreateNoWindow = $false
+	$startInfo.UseShellExecute = $true
+	#$startInfo.Username = "DOMAIN\Username"
+	#$startInfo.Password = $password
   if ($printer -ne $null)
   {
     #  if ($procForFile.Verbs -notcontains "printto")
     #{    return  "type notcontains 'printto'"		 }
 
-    Start-Process –FilePath $file -ArgumentList $printer -Verb "printto" -Wait -ErrorVariable err1
+	  $startInfo.Verb =  "printto" 
+    #Start-Process –FilePath $file -ArgumentList $printer -Verb "printto" -Wait -ErrorVariable err1
   }
   else
   {
-    #if ($procForFile.Verbs -notcontains "print")
+	 echo "Convert $file error "
+  	 return $null
+	#  " $startInfo.Verb =  "print" 
+  #if ($procForFile.Verbs -notcontains "print")
     #{ return  "type notcontains 'print'"		   }
 
-    Start-Process –FilePath $file -Verb "print" -Wait -ErrorVariable err1
+    #Start-Process –FilePath $file -Verb "print" -Wait -ErrorVariable err1
 
   }
-  if ($err1 -ne $null)
-  {
-    $ftype1 = $null
-    if ($file -like "*.jpg" -or $file -like "*.jpeg" -or $file -like "`"*.jpg`"" -or $file -like "`"*.jpeg`"")
-    {
-      $ftype1 = "jpegfile"
-    }
-    elseif ($file -like "*.tif" -or $file -like "*.tiff" -or $file -like "`"*.tif`"" -or $file -like "`"*.tiff`"")
-    {
-      $ftype1 = "TIFImage.Document"
-    }
-    if ($ftype1 -ne $null)
-    {
-      $reg1 = Get-Item -Path Registry::HKEY_CLASSES_ROOT\$ftype1\shell\printto\Command
-      if ($reg1 -ne $null)
-      { $printt2 = $reg1.Getvalue("").replace("`"%1`"",$file).replace("`"%2`"",$printer).replace("%3","").replace("%4","")
 
-        #	 Start-Process  $printt2	-ErrorVariable err1
-        cmd /c $printt2
+	$process = New-Object System.Diagnostics.Process
+	$process.StartInfo = $startInfo
 
-        $ptERRORLEVEL = $lastexitcode
-        if ($ptERRORLEVEL -ne 0)
-        { $err1 = $ptERRORLEVEL }
-        else
-        {
-          $err1 = $null
-        }
-      }
-    }
-  }
+		$errP = $null
+	$process.Start() | Write-debug
+	#$standardOut = $process.StandardOutput.ReadToEnd()
+	#$process.WaitForExit()
+
+	if (!$?)
+	{
+		$errP =	 $Error[0]
+	}
 
 
-  return $err1
+	$process
+
+
+
+	return $errP;
+
+ # return $err1
 
 
   #if ($err1 -ne $null)
@@ -176,6 +181,40 @@ function msgBoxRetryCancel ($x)
   return $OUTPUT;
 }
 
+
+function PrintByRegCommand([string]$file, [string]$printer)
+{
+  $err1 = $null
+  
+    $ftype1 = $null
+    if ($file -like "*.jpg" -or $file -like "*.jpeg" -or $file -like "`"*.jpg`"" -or $file -like "`"*.jpeg`"")
+    {
+      $ftype1 = "jpegfile"
+    }
+    elseif ($file -like "*.tif" -or $file -like "*.tiff" -or $file -like "`"*.tif`"" -or $file -like "`"*.tiff`"")
+    {
+      $ftype1 = "TIFImage.Document"
+    }
+    if ($ftype1 -ne $null)
+    {
+      $reg1 = Get-Item -Path Registry::HKEY_CLASSES_ROOT\$ftype1\shell\printto\Command
+      if ($reg1 -ne $null)
+      { $printt2 = $reg1.Getvalue("").replace("`"%1`"",$file).replace("`"%2`"",$printer).replace("%3","").replace("%4","")
+
+        #	 Start-Process  $printt2	-ErrorVariable err1
+        cmd /c $printt2
+
+        $ptERRORLEVEL = $lastexitcode
+        if ($ptERRORLEVEL -ne 0)
+        { $err1 = $ptERRORLEVEL }
+        else
+        {
+          $err1 = $null
+        }
+      }
+    }
+	return $err;
+}
 #directory to process
 function Print1 ($file,[string]$obrazcyParentDir)
 {
@@ -228,7 +267,6 @@ function Print1 ($file,[string]$obrazcyParentDir)
 
 	$outFileCut = $null
   if($file.Extension -eq ".pdf")
-
   {
 
         $outFileCut = ("$outFileS" + ".8cut.pdf") #($outFile
@@ -237,7 +275,7 @@ function Print1 ($file,[string]$obrazcyParentDir)
         $cutRes =  Cut_PdfTo8 $file.FullName $outFileCut 
         if ($cutRes -and (Test-Path $outFileCut))
         {
-          Remove-Item $outFile -Force;
+          Remove-Item $outFile -Force -ErrorAction SilentlyContinue;
         
         # not work & $pdftk $outFileCut multistamp "`"$waterMPDF`"" output $outFile
         #  Move-Item $outFileCut $outFile -Force
@@ -368,18 +406,20 @@ function Print1 ($file,[string]$obrazcyParentDir)
 	{
 		$fileToPrint = $($outFileCut)
 	}
-  $ptErr = printto "`"$fileToPrint`"" "`"$PRINTERNAME`""
+  [System.Diagnostics.Process]$ptProc,$errP = printto "`"$fileToPrint`"" "`"$PRINTERNAME`""
+
   #$ptSuccess  Silently-ErrorVariable ProcessError -ErrorAction Continue 
+	#$ptProcErrOut = $ptProc.StandardError.ReadToEnd()
+	$endStat = $ptProc.HasExited
 
+  #if ($ptErr -ne $null) {
 
-  if ($ptErr -ne $null) {
-
-    $errPrint = ("`"$($file.FullName)`"" + " не имеет печатающей программы :" + $ptErr.ToString())
-    Write-Warning $errPrint
-    "[$(get-date)] $errPrint" >> $logFile
-   }
-   else
-   {
+  #  $errPrint = ("`"$($file.FullName)`"" + " не имеет печатающей программы :" + $ptErr.ToString())
+  #  Write-Warning $errPrint
+  #  "[$(get-date)] $errPrint" >> $logFile
+  # }
+  # else
+   
   # $printto.exe "in\example.rtf" "$PRINTERNAME"
   #  $ptERRORLEVEL = $lastexitcode
   # if ($ptERRORLEVEL -eq 0) $res11 = & $pdftk "$outFile" dump_data | Select-string -Pattern "PageMediaNumber: ([0-9]*)"
@@ -388,7 +428,8 @@ function Print1 ($file,[string]$obrazcyParentDir)
   {
     if (Test-Path ($outFile))
     {
-       #TODO: cut pdf first
+       if ($outFileCut -eq $null)
+	  {
         $outFileCut = ("$outFileS" + ".pdf8cut") #($outFile
 
 
@@ -398,18 +439,48 @@ function Print1 ($file,[string]$obrazcyParentDir)
           Remove-Item $outFile -Force;
           Move-Item $outFileCut $outFile -Force
         }
-
+		$outFileCut = $null
+	  }
 
       if ($iW -gt 0)
       {
         Write-Host "Конвертация файла `"$($file.FullName)`" завершилась"
       }
       break;
+   }
+	  elseif($ptProc.HasExited -and $ptProc.ExitCode -eq 1)
+	  {
+		  #не очень понятно почему, - возможно. для прог, которые остаются закрытыми.
+		continue
     }
+	  elseif($ptProc.HasExited -and $ptProc.ExitCode -ge 2)
+	  {
+	  	   $errPrint = ("`"$($file.FullName)`"" + " не конвертируется ")
+	   Write-Warning $errPrint
+	   "[$(get-date)] $errPrint" >> $logFile
+		break;
+
+	} 
+	  elseif ($errP -ne $null )
+	  {
+
+		echo $errP.Exception.InnerException.NativeErrorCode
+	   $errPrint = ("`"$($file.FullName)`"" + " не конвертируется, возможно не имеет печатающей программы :" + $errP.ToString())
+	   Write-Warning $errPrint
+	   "[$(get-date)] $errPrint" >> $logFile
+		break;
+
+	  }
+
     else
     {
       $keysToSkip = 's'
       if ($iW -eq 0)
+      {
+	     Start-Sleep -Milliseconds 1000
+		continue;
+	  }
+	   elseif ($iW -eq 1)
       {
         Write-Host "Конвертация файла `"$($file.FullName)`" затянулась. Нажмите `"S`" чтобы пропустить его"
         Start-Sleep -Milliseconds 100
@@ -424,7 +495,7 @@ function Print1 ($file,[string]$obrazcyParentDir)
     }
 
   } # for 
- } #else 
+  #else 
 	if ($outFileCut -ne $null)
 	{
 	 Remove-Item $outFileCut -Force;
@@ -437,8 +508,8 @@ function Print1 ($file,[string]$obrazcyParentDir)
   }
   elseif (Test-Path $settingsBackFileName)
   {
-    Remove-Item -Force $settfile
-    Move-Item -Force $settingsBackFileName $settfile.name
+    Remove-Item -Force $settings
+    Move-Item -Force $settingsBackFileName $SF1 -ErrorAction SilentlyContinue
   }
 
 
@@ -635,7 +706,7 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
       }
 
       # $aafiles
-      out-host $aafiles[0].pathAr
+       $aafiles[0].pathAr| out-host
       # если папок нет
       if (($aafiles | Where-Object { $_.isdir }).length -eq 0)
       {
