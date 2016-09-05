@@ -811,8 +811,8 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
     }
     else
     {
-      if (!$algAForB)
-      { continue; } #TODO
+      #if (!$algAForB)
+      #{ continue; } 
       AlgA_Iter $value $obrazcyParentDir
       #break;
     }
