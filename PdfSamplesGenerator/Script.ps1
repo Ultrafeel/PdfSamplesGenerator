@@ -134,7 +134,21 @@ function Get-PdfNumOfPages([string]$outFile)
 
       $numOfPages = ($res11.Matches[0].Groups[1].value)
 	return  [int]$numOfPages  
- }
+}
+
+function Cut_PdfTo8 ($inFile, $outFileCut ) 
+{
+		  $numOfPages = Get-PdfNumOfPages $inFile
+		   if ([int]$numOfPages -gt 8)
+      {
+
+ 					# Write-Debug  $DebugPreference = "Continue" 
+        & $pdftk "$inFile" cat 1-8 output $outFileCut verbose dont_ask | Write-Debug
+        return $true
+      }
+      return $false
+}
+
 
 $u7z = Get-Command "7z" -ErrorAction SilentlyContinue
 if ($u7z -eq $null)
@@ -258,7 +272,7 @@ function Print1 ($file,[string]$obrazcyParentDir)
 
   }
   #(rename "$settings" "$SF1.back")
-  
+
   # %CD%\out\demo.pdf
   #ECHO "Save settings to \" $settings\""
   #ECHO "[PDF Printer]" > "$settings"
@@ -344,20 +358,18 @@ function Print1 ($file,[string]$obrazcyParentDir)
   {
     if (Test-Path ($outFile))
     {
-		  $numOfPages = Get-PdfNumOfPages $outFile
-		   if ([int]$numOfPages -gt 8)
-      {
-
-        #TODO: cut pdf first
+       #TODO: cut pdf first
         $outFileCut = ("$outFileS" + ".pdf8cut") #($outFile
-					# Write-Debug  $DebugPreference = "Continue" 
-        & $pdftk "$outFile" cat 1-8 output $outFileCut verbose dont_ask | Write-Debug
-        if (Test-Path $outFileCut)
+
+
+        $cutRes =  Cut_PdfTo8 $outFile, $outFileCut 
+        if ($cutRes -and (Test-Path $outFileCut))
         {
           Remove-Item $outFile -Force;
           Move-Item $outFileCut $outFile -Force
         }
-      }
+
+
       if ($iW -gt 0)
       {
         Write-Host "Конвертация файла `"$($file.FullName)`" завершилась"
@@ -384,7 +396,8 @@ function Print1 ($file,[string]$obrazcyParentDir)
   } # for 
 
 
-}
+} #Print1
+
 $docExtensions1 = ".rtf",".cdr",".jpg",".tif",".tiff",".doc",".docx",".indd"
 $docExtensions = $docExtensions1 + ".pdf"
 
