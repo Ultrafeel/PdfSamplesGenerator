@@ -126,7 +126,7 @@ function printto
   #return $true;
 
 }
-$printto = "d:\INSTALL\!office\Bullzip\files\printto.exe"
+#$printto = "d:\INSTALL\!office\Bullzip\files\printto.exe"
 
 $pdftk = Get-Command "pdftk" -ErrorAction SilentlyContinue
 if ($pdftk -eq $null)
@@ -464,7 +464,15 @@ function Print1 ($file,[string]$obrazcyParentDir)
 	  elseif ($errP -ne $null )
 	  {
 
-		echo $errP.Exception.InnerException.NativeErrorCode
+		  $errP2 = $null;
+		if  ($errP.Exception.InnerException.NativeErrorCode -eq 1155)
+		  {
+			  
+			 $errP2 =  PrintByRegCommand "`"$($file.FullName)`""  "`"$PRINTERNAME`""
+			  if ($errP2 -eq $null)
+			  { continue }
+		  }
+
 	   $errPrint = ("`"$($file.FullName)`"" + " не конвертируется, возможно не имеет печатающей программы :" + $errP.ToString())
 	   Write-Warning $errPrint
 	   "[$(get-date)] $errPrint" >> $logFile
