@@ -245,7 +245,8 @@ function Print1 ($file,[string]$obrazcyParentDir)
   {
     $LAPP = "$env:USERPROFILE\Local Settings\Application Data"
   }
-  $settings = "$LAPP\PDF Writer\$PRINTERNAME\$SF1"
+  $settingsDir = "$LAPP\PDF Writer\$PRINTERNAME"
+  $settings = "$settingsDir\$SF1"
   #  ECHO $settings
   $settFile = $null
   $settingsBackFile = $null
@@ -268,7 +269,7 @@ function Print1 ($file,[string]$obrazcyParentDir)
   }
   else
   {
-    $settingsBackFileName = Join-Path $settFile.Directory ($SF1 + ".back" )
+    $settingsBackFileName = Join-Path $settingsDir ($SF1 + ".back" )
 
   }
   #(rename "$settings" "$SF1.back")
