@@ -1,6 +1,14 @@
 ﻿#
 # Script.ps1
 #
+#Add-Type -assemblyname  Bullzip.PdfWriter
+#$env:CommonProgramFiles 
+#$bres= Add-Type -Path "$env:CommonProgramFiles\Bullzip\PDF Printer\API\Microsoft.NET\Framework\v4.0\Bullzip.PDFWriter.dll" -PassThru
+##[Bullzip.PdfWriter.PdfInternal]
+#$gh1 = New-Object  Bullzip.PdfWriter.ComPdfInternal
+#$gh1.pdftk()
+##$gh1 = New-Object  PdfWriter.PdfInternal.Ghostscript
+
 
 function EchoA
 {
