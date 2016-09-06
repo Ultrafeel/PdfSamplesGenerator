@@ -536,7 +536,8 @@ function Print1 ($file,[string]$obrazcyParentDir)
     }
     elseif ($ptProc.HasExited -and $ptProc.ExitCode -eq 1)
     {
-      #не очень понятно почему, - возможно. для прог, которые остаются закрытыми.
+      #1 -, но печатает, такое поведение не очень понятно почему, например у AcrobReader
+	   #- возможно. для прог, которые остаются открытыми.
       continue
     }
     elseif ($ptProc.HasExited -and $ptProc.ExitCode -ge 2)
@@ -592,6 +593,7 @@ function Print1 ($file,[string]$obrazcyParentDir)
       if ($StopPressed)
       {#$ptProc.
         Write-Host "Конвертация файла `"$($file.FullName)`" пропущена"
+		    Remove-Item $outFile -Force -ErrorAction SilentlyContinue;
 			 break;
       }
     }
@@ -864,7 +866,15 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
           elseif ($afile.depth -lt $depth)
           { break; }
         }
-        $arTargdirSplit = ($aFfiles[$deepest_firstIndex].pathAr | select -SkipLast 1)
+		$aTrgetFPath =  @($aFfiles[$deepest_firstIndex].pathAr )
+		  if ($aTrgetFPath.Count -lt $depth)
+		  {
+			  Write-DebugDebug "pathAr strange"
+			  $aFfiles[$deepest_firstIndex].pathAr =  $aFfiles[$deepest_firstIndex].Path.Split('\')
+			 $aTrgetFPath = $aFfiles[$deepest_firstIndex].pathAr
+
+		}
+        $arTargdirSplit = ($aTrgetFPath| select -First ($aTrgetFPath.count + (-1)) )
         $arTargdir = $arTargdirSplit -join "\";
         $aFfilesTargFolder = ($aFfiles | Where-Object { (Compare-Object -ReferenceObject ($_.pathAr | select -First ($depth + (-1))) -DifferenceObject $arTargdirSplit -SyncWindow 0) -eq $null }) # $_.path	-like  "$arTargdir\*"
         # @($aFfiles[$deepest_firstIndex])
