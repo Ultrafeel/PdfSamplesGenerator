@@ -38,10 +38,12 @@ function Wait-KeyPress2 ($keysToSkip)
   if ($Host.UI.RawUI.KeyAvailable)
   {
     $key1 = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-    if (@($keysToSkip| select {[char]$_}) -inotcontains $key1) -icontains $key1.Character
-
+    if (@($keysToSkip| % {[char]$_}) -inotcontains $key1.Character) # -icontains $key1.Character
     {
-      $Host.UI.RawUI.FlushInputBuffer()
+		($key1.Character -ne 0)
+      {
+		  $Host.UI.RawUI.FlushInputBuffer()
+	  }
       $doSleep = $true;
     }
   }
@@ -166,9 +168,11 @@ function Cut_PdfTo8 ($inFile,$outFileCut)
   {
 
     # Write-Debug  $DebugPreference = "Continue" 
-    & $pdftk "$inFile" cat 1-8 output $outFileCut verbose dont_ask | Write-Warning
+     $outTK =  & $pdftk "$inFile" cat 1-8 output $outFileCut verbose dont_ask 
     if ($?)
     { return (8 - $numOfPagesN) }
+	  else
+	  { Write-Warning $outTK }
   }
   elseif ($numOfPagesN -ge 1)
   {
