@@ -33,7 +33,7 @@ function Wait-KeyPress2 ($keysToSkip)
   if ($Host.UI.RawUI.KeyAvailable)
   {
 	$key1=	$host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-    if ($key1 -notin $keysToSkip)
+    if ($keysToSkip -notcontains $key1)
     {
 	   $Host.UI.RawUI.FlushInputBuffer()
       $doSleep = $true;
@@ -564,7 +564,7 @@ $archs =
 function AlgA_Iter
 {
   param($value,$obrazcyParentDir)
-  if ($value.Extension -in $docExtensions1)
+  if ($docExtensions1 -contains  $value.Extension  )
   {
 
     Print1 $value $obrazcyParentDir
@@ -643,7 +643,7 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
 
   $ArchsExts = ($archs | ForEach-Object { $_[0] })
 
-  #$nonArch = $cont1| Where-Object {$_.Extension -notin '.zip','.rar' }#,'.config'
+  #$nonArch = $cont1| Where-Object { '.zip','.rar' -notcontains  $_.Extension}#,'.config'
 
 
   # foreach ($value in $cont1) 
@@ -668,7 +668,7 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
     $fExt = $value.Extension
     if ($fExt -ne $null)
     { $fExt = $fExt.TrimStart('.') }
-    if ($fExt -in $ArchsExts)
+    if ($ArchsExts -contains $fExt)
     {
 
       #algB
@@ -778,7 +778,7 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
         }
         $arTargdirSplit = ($aFfiles[$deepest_firstIndex].pathAr | select -SkipLast 1)
         $arTargdir = $arTargdirSplit -join "\";
-        $aFfilesTargFolder = ($aFfiles | Where-Object { (Compare-Object -ReferenceObject ($_.pathAr | select -First ($depth - 1)) -DifferenceObject $arTargdirSplit -SyncWindow 0) -eq $null }) # $_.path	-like  "$arTargdir\*"
+        $aFfilesTargFolder = ($aFfiles | Where-Object { (Compare-Object -ReferenceObject ($_.pathAr | select -First ($depth -eq 1)) -DifferenceObject $arTargdirSplit -SyncWindow 0) -eq $null }) # $_.path	-like  "$arTargdir\*"
         # @($aFfiles[$deepest_firstIndex])
 
         #currently  One file
@@ -789,7 +789,7 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
           foreach ($mask in ("1_.pdf","*.pdf"))
           {
 
-            $pretendent1 = $aFfilesTargFolder | Where-Object { $_.pathAr[$_.pathAr.Count - 1] -like $mask }
+            $pretendent1 = $aFfilesTargFolder | Where-Object { $_.pathAr[$_.pathAr.Count -eq 1] -like $mask }
 
             if ($pretendent1.Count -gt 0)
             { break; }
@@ -802,9 +802,9 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
           {
 
             $pretendent1 = $aFfilesTargFolder | Where-Object {
-              $_.pathAr[$_.pathAr.Count - 1] -like $mask[0] -or
+              $_.pathAr[$_.pathAr.Count -eq 1] -like $mask[0] -or
               (($mask.Count -le 1) -or
-                ($_.pathAr[$_.pathAr.Count - 1] -like $mask[1]))
+                ($_.pathAr[$_.pathAr.Count -eq 1] -like $mask[1]))
             }
 
             if ($pretendent1.Count -gt 0)
