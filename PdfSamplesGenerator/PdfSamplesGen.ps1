@@ -13,7 +13,7 @@
 #$gh1 = New-Object  Bullzip.PdfWriter.ComPdfInternal
 #$gh1.pdftk()
 ##$gh1 = New-Object  PdfWriter.PdfInternal.Ghostscript
-#$ErrorActionPreference =  Inquire #"SilentlyContinue" 
+#$ErrorActionPreference =  "Inquire" #"SilentlyContinue" 
 
 #TODO
 Set-StrictMode -Version 2.0
@@ -264,7 +264,9 @@ function PrintByRegCommand ([string]$file,[string]$printer)
 			{
 				$err1 = $pOutp
 			}
+
 		}
+		Write-Debug "Print $file as $ftype1 $($err1 -eq $null)"
 	  #$ptERRORLEVEL = $null
    #   $ptERRORLEVEL = $lastexitcode
    #   if ($ptERRORLEVEL -ne 0)
@@ -554,7 +556,10 @@ function Print1 ($file,[string]$obrazcyParentDir)
 
         $errP2 = PrintByRegCommand "`"$($file.FullName)`"" "`"$PRINTERNAME`""
         if ($errP2 -eq $null)
-        { continue }
+        { 
+			$errP = $null
+			continue 
+		}
       }
 
       $errPrint = ("`"$($file.FullName)`"" + " не конвертируется, возможно не имеет печатающей программы :" + $errP.ToString())
@@ -566,6 +571,10 @@ function Print1 ($file,[string]$obrazcyParentDir)
 
     else
     {
+		if ($ptProc.HasExited -eq $null)
+		{
+			Write-Debug "($ptProc).HasExited -eq null"
+		}
       $keysToSkip = 's'
       if ($iW -eq 0)
       {
@@ -581,9 +590,9 @@ function Print1 ($file,[string]$obrazcyParentDir)
       }
 	  $StopPressed=	Wait-KeyPress2 $keysToSkip
       if ($StopPressed)
-      {
+      {#$ptProc.
         Write-Host "Конвертация файла `"$($file.FullName)`" пропущена"
-        break;
+			 break;
       }
     }
 
@@ -868,7 +877,7 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
           foreach ($mask in ("1_.pdf","*.pdf"))
           {
 
-            $pretendent1 = $aFfilesTargFolder | Where-Object { $_.pathAr[$_.pathAr.Count + (-1)] -like $mask }
+            $pretendent1 = @($aFfilesTargFolder | Where-Object { $_.pathAr[$_.pathAr.Count + (-1)] -like $mask })
 
             if ($pretendent1.Count -gt 0)
             { break; }
@@ -880,11 +889,11 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
               @( "telo..*.doc","telo..*.docx"),@( "*.doc","*.docx")))
           {
 
-            $pretendent1 = $aFfilesTargFolder | Where-Object {
+            $pretendent1 = @($aFfilesTargFolder | Where-Object {
               $_.pathAr[$_.pathAr.Count +(-1)] -like $mask[0] -or
               (($mask.Count -le 1) -or
                 ($_.pathAr[$_.pathAr.Count + (- 1)] -like $mask[1]))
-            }
+            })
 
             if ($pretendent1.Count -gt 0)
             { break; }
