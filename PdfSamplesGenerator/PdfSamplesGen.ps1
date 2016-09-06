@@ -845,7 +845,7 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
         }
         $arTargdirSplit = ($aFfiles[$deepest_firstIndex].pathAr | select -SkipLast 1)
         $arTargdir = $arTargdirSplit -join "\";
-        $aFfilesTargFolder = ($aFfiles | Where-Object { (Compare-Object -ReferenceObject ($_.pathAr | select -First ($depth -eq 1)) -DifferenceObject $arTargdirSplit -SyncWindow 0) -eq $null }) # $_.path	-like  "$arTargdir\*"
+        $aFfilesTargFolder = ($aFfiles | Where-Object { (Compare-Object -ReferenceObject ($_.pathAr | select -First ($depth + (-1))) -DifferenceObject $arTargdirSplit -SyncWindow 0) -eq $null }) # $_.path	-like  "$arTargdir\*"
         # @($aFfiles[$deepest_firstIndex])
 
         #currently  One file
@@ -856,7 +856,7 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
           foreach ($mask in ("1_.pdf","*.pdf"))
           {
 
-            $pretendent1 = $aFfilesTargFolder | Where-Object { $_.pathAr[$_.pathAr.Count -eq 1] -like $mask }
+            $pretendent1 = $aFfilesTargFolder | Where-Object { $_.pathAr[$_.pathAr.Count + (-1)] -like $mask }
 
             if ($pretendent1.Count -gt 0)
             { break; }
@@ -869,9 +869,9 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
           {
 
             $pretendent1 = $aFfilesTargFolder | Where-Object {
-              $_.pathAr[$_.pathAr.Count -eq 1] -like $mask[0] -or
+              $_.pathAr[$_.pathAr.Count +(-1)] -like $mask[0] -or
               (($mask.Count -le 1) -or
-                ($_.pathAr[$_.pathAr.Count -eq 1] -like $mask[1]))
+                ($_.pathAr[$_.pathAr.Count + (- 1)] -like $mask[1]))
             }
 
             if ($pretendent1.Count -gt 0)
