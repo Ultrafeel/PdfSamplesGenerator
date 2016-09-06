@@ -264,7 +264,7 @@ function Print1 ($file,[string]$obrazcyParentDir)
     $checkExistance = $true
   }
 	#TODO
-	echo "obrazcyParentDir = $obrazcyParentDir"
+	#echo "obrazcyParentDir = $obrazcyParentDir"
   $samplesTargetDirName = "Образцы"
   $sampleSuffix = "_образец"
   $watermarkText = "OBRAZEC" # "образец"
@@ -451,6 +451,7 @@ function Print1 ($file,[string]$obrazcyParentDir)
 	{
 		$fileToPrint = $($outFileCut)
 	}
+	echo "Основной этап конвертации `"$($file.FullName)`" "
   [System.Diagnostics.Process]$ptProc,$errP = printto "`"$fileToPrint`"" "`"$PRINTERNAME`""
 
   #$ptSuccess  Silently-ErrorVariable ProcessError -ErrorAction Continue 
@@ -566,7 +567,7 @@ function Print1 ($file,[string]$obrazcyParentDir)
   if ($settingsBackFile -ne $null -and $settingsBackFile.Exists) #(Test-Path "$settings.back")
   {
     Remove-Item -Force $settings
-    Move-Item -Force $settingsBackFile.FullName $SF1
+    Move-Item -Force $settingsBackFile.FullName $SF1 -ErrorAction SilentlyContinue
   }
   elseif (Test-Path $settingsBackFileName)
   {
