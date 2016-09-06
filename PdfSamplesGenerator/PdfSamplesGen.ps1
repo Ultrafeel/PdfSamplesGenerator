@@ -40,12 +40,20 @@ function Wait-KeyPress2 ($keysToSkip)
     $key1 = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     if (@($keysToSkip| % {[char]$_}) -inotcontains $key1.Character) # -icontains $key1.Character
     {
-		($key1.Character -ne 0)
+		if ($key1.Character -ne 0)
       {
 		  $Host.UI.RawUI.FlushInputBuffer()
 	  }
       $doSleep = $true;
     }
+	  else
+	  {
+		  Write-Debug "KeyPressed to stop" 
+	  }
+	  
+		Write-Debug "KeyPressed withresult doSleep $doSleep :"
+		Write-Debug $key1
+	
   }
   else
   { $doSleep = $true; }
@@ -555,7 +563,8 @@ function Print1 ($file,[string]$obrazcyParentDir)
         continue
 
       }
-      if (Wait-KeyPress2 $keysToSkip)
+	  $StopPressed=	Wait-KeyPress2 $keysToSkip
+      if ($StopPressed)
       {
         Write-Host "Конвертация файла `"$($file.FullName)`" пропущена"
         break;
