@@ -1,6 +1,11 @@
 ﻿#
 # Script.ps1
 #
+
+
+#Parameters : this.ps1 [TargetLocation] 
+# otherwise   - uses Current script file location
+
 #Add-Type -assemblyname  Bullzip.PdfWriter
 #$env:CommonProgramFiles 
 #$bres= Add-Type -Path "$env:CommonProgramFiles\Bullzip\PDF Printer\API\Microsoft.NET\Framework\v4.0\Bullzip.PDFWriter.dll" -PassThru
@@ -155,13 +160,19 @@ function Get-PdfNumOfPages([string]$outFile)
 function Cut_PdfTo8 ($inFile, $outFileCut ) 
 {
 		  $numOfPages = Get-PdfNumOfPages $inFile
-		   if ([int]$numOfPages -gt 8)
+	[int]$numOfPagesN = [int]$numOfPages
+	  if ($numOfPagesN -gt 8)
       {
 
  					# Write-Debug  $DebugPreference = "Continue" 
         & $pdftk "$inFile" cat 1-8 output $outFileCut verbose dont_ask | Write-Warning
         return $?
       }
+	elseif ($numOfPagesN -ge 1)
+	{
+		return $true; 
+	}
+	 Write-Warning "Cut Pdf To 8 pages something wrong"
       return $false
 }
 
@@ -313,7 +324,7 @@ function Print1 ($file,[string]$obrazcyParentDir)
 
 			write-warning $em3
 			"[$(get-date)] $em3" >> $logFile
-			  Remove-Item $outFile -Force -ErrorAction SilentlyContinue;
+			Remove-Item $outFile -Force -ErrorAction SilentlyContinue;
   
          return
         } 
@@ -588,18 +599,7 @@ function AlgA_Iter
 
   echo $value.FullName | Write-Debug
 }
-echo $MyInvocation|gm
-echo "InvocationName"
-echo $MyInvocation.InvocationName
-echo "CommandOrigin"
-echo $MyInvocation.CommandOrigin
-echo "MyCommand"
-echo $MyInvocation.MyCommand.path
-echo Split-Path -Parent $MyInvocation.MyCommand.path
-echo "ScriptName"
-echo $MyInvocation.ScriptName
 
-echo  " mi = $MyInvocation"
 #not in PS2 !! echo $MyInvocation.PSCommandPath
 
 if ($args.Count -gt 0 -and $args[0].length -ge 0)
