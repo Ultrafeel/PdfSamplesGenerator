@@ -38,7 +38,8 @@ function Wait-KeyPress2 ($keysToSkip)
   if ($Host.UI.RawUI.KeyAvailable)
   {
     $key1 = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-    if ($keysToSkip -notcontains $key1)
+    if (@($keysToSkip| select {[char]$_}) -inotcontains $key1) -icontains $key1.Character
+
     {
       $Host.UI.RawUI.FlushInputBuffer()
       $doSleep = $true;
