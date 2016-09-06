@@ -436,11 +436,13 @@ function Print1 ($file,[string]$obrazcyParentDir)
   # TODO: showprogress=yes
   #
   # confirmnewfolder=yes
-  <#  suppresserrors=no
+  <# 
+	suppresserrors=no
     rememberlastfoldername=yes
+	rememberlastfilename=no
   openfolder=no
   showsaveas=nofile
-
+  autorotatepages=none
   device=pdfwrite
   textalphabits=4
   graphicsalphabits=4
