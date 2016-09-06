@@ -250,9 +250,21 @@ function PrintByRegCommand ([string]$file,[string]$printer)
     { $printt2 = $reg1.Getvalue("").replace("`"%1`"",$file).replace("`"%2`"",$printer).replace("%3","").replace("%4","")
 		$errF = $null
       #	 Start-Process  $printt2	-ErrorVariable $errF
-      Invoke-Expression "& $printt2" -ErrorVariable $err1
+     #-ErrorVariable $err1
+	 $pOutp = Invoke-Expression "& $printt2" 
 		#cmd /c $printt2
-	  
+		if ($?)
+		{ 
+			$err1 = $null
+		}
+		else
+		{
+			$err1 = $Error[0]
+			if ($err1 -eq $null)
+			{
+				$err1 = $pOutp
+			}
+		}
 	  #$ptERRORLEVEL = $null
    #   $ptERRORLEVEL = $lastexitcode
    #   if ($ptERRORLEVEL -ne 0)
