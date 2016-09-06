@@ -166,14 +166,15 @@ function Cut_PdfTo8 ($inFile, $outFileCut )
 
  					# Write-Debug  $DebugPreference = "Continue" 
         & $pdftk "$inFile" cat 1-8 output $outFileCut verbose dont_ask | Write-Warning
-        return $?
+          if ($?)
+		  { return (8-$numOfPagesN) }
       }
 	elseif ($numOfPagesN -ge 1)
 	{
-		return $true; 
+		return $numOfPagesN; 
 	}
 	 Write-Warning "Cut Pdf To 8 pages something wrong"
-      return $false
+      return $numOfPagesN
 }
 
 
@@ -300,7 +301,7 @@ function Print1 ($file,[string]$obrazcyParentDir)
     Remove-Item -Force $outFile
   }
 
-	$outFileCut = $null
+  $outFileCut = $null
   if($file.Extension -eq ".pdf")
   {
 
@@ -308,7 +309,7 @@ function Print1 ($file,[string]$obrazcyParentDir)
 
 
         $cutRes =  Cut_PdfTo8 $file.FullName $outFileCut 
-        if ($cutRes -and (Test-Path $outFileCut))
+        if (($cutRes -lt 0) -and (Test-Path $outFileCut))
         {
           Remove-Item $outFile -Force -ErrorAction SilentlyContinue;
         
@@ -317,7 +318,7 @@ function Print1 ($file,[string]$obrazcyParentDir)
 
 
         }
-        else
+        elseif ($cutRes -eq 0)
         {
           
 		  $em3= "  Cannot convert $($file.FullName).  Cannot cut tmp file $outFile"
@@ -326,8 +327,12 @@ function Print1 ($file,[string]$obrazcyParentDir)
 			"[$(get-date)] $em3" >> $logFile
 			Remove-Item $outFile -Force -ErrorAction SilentlyContinue;
   
-         return
-        } 
+			 return
+        }
+		else
+		{
+			$outFileCut = $null;
+		}
   }
   #------------------------------
 
@@ -474,12 +479,12 @@ function Print1 ($file,[string]$obrazcyParentDir)
 
 
         $cutRes =  Cut_PdfTo8 $outFile $outFileCut 
-        if ($cutRes -and (Test-Path $outFileCut))
+        if (($cutRes -lt 0) -and (Test-Path $outFileCut))
         {
           Remove-Item $outFile -Force;
           Move-Item $outFileCut $outFile -Force
         }
-		else
+		elseif ($cutRes -eq 0)
 		{
 			$em3= "  Cannot convert $($file.FullName).  Cannot cut tmp file $outFile"
 
