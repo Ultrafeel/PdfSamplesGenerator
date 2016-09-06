@@ -13,7 +13,7 @@
 #TODO
  Set-StrictMode -Version 2.0
 
-$waterMPDF = "d:\!Work\Pdf_c\Образец_ВодЗнак.pdf"
+$waterMPDF = "d:\!Work\Pdf_c\_Образец_ВодЗнак.pdf"
 function EchoA
 {
   for ($i = 0; $i -lt $args.length; $i++)
@@ -132,8 +132,15 @@ function printto
 
 $pdftk = Get-Command "pdftk" -ErrorAction SilentlyContinue
 if ($pdftk -eq $null)
-{ $pdftk = "C:\Program Files (x86)\PDFtk\bin\pdftk.exe" }
+{ $pdftk = Get-Command "C:\Program Files (x86)\PDFtk\bin\pdftk.exe" }
 
+if (!(Test-Path $waterMPDF))
+{
+	
+	$waterMPDF  =	Split-Path -Parent $pdftk.Path
+	$waterMPDF  =	Split-Path -Parent  $waterMPDF
+    $waterMPDF  =	Join-Path $waterMPDF "Образец_ВодЗнак.pdf"
+}
 function Get-PdfNumOfPages([string]$outFile)
 {
 	  $dumpData1 = 	& $pdftk "$outFile" dump_data 
@@ -152,7 +159,7 @@ function Cut_PdfTo8 ($inFile, $outFileCut )
       {
 
  					# Write-Debug  $DebugPreference = "Continue" 
-        & $pdftk "$inFile" cat 1-8 output $outFileCut verbose dont_ask | Write-Debug
+        & $pdftk "$inFile" cat 1-8 output $outFileCut verbose dont_ask | Write-Warning
         return $?
       }
       return $false
@@ -302,7 +309,12 @@ function Print1 ($file,[string]$obrazcyParentDir)
         else
         {
           
-         write-warning " Cannot cut $outFile"
+		  $em3= "  Cannot convert $($file.FullName).  Cannot cut tmp file $outFile"
+
+			write-warning $em3
+			"[$(get-date)] $em3" >> $logFile
+			  Remove-Item $outFile -Force -ErrorAction SilentlyContinue;
+  
          return
         } 
   }
@@ -574,8 +586,21 @@ function AlgA_Iter
     Print1 $value $obrazcyParentDir
   }
 
-  $value.FullName | Write-Debug
+  echo $value.FullName | Write-Debug
 }
+echo $MyInvocation|gm
+echo "InvocationName"
+echo $MyInvocation.InvocationName
+echo "CommandOrigin"
+echo $MyInvocation.CommandOrigin
+echo "MyCommand"
+echo $MyInvocation.MyCommand.path
+echo Split-Path -Parent $MyInvocation.MyCommand.path
+echo "ScriptName"
+echo $MyInvocation.ScriptName
+
+echo  " mi = $MyInvocation"
+#not in PS2 !! echo $MyInvocation.PSCommandPath
 
 if ($args.Count -gt 0 -and $args[0].length -ge 0)
 {
@@ -585,15 +610,24 @@ else
 { 
 	  #$MyInvocation.
 	#TODO
-	$targetP =  (GEt-item $PSCommandPath).Directory
+	$par2 = Split-Path -Parent $MyInvocation.MyCommand.path
+	$targetP = $par2
+	if ($targetP -eq $null)
+	{ 
+		$targetP = (GEt-item $PSCommandPath).Directory
+			
+	}
+	
 	Echo "Скрипт запущен для $targetP"
-	while (!(Test-path $targetP))
+	while ($targetP -eq $null -or !(Test-path $targetP))
 	{
+		echo "Не получилось найти $targetP . Введите вручную"
 		$targetP = Read-Host -Prompt "Не получилось найти $targetP . Введите вручную"
 		if ($targetP -eq $null)
 		{
+			echo "Не получилось найти $targetP . Выходим"
 			return
-			}
+		}
 	}
 	# Get-Location 
 }
@@ -869,6 +903,7 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
 
 Algs $targetP $false $null
 
+echo "Обработка $targetP завершена. Скрипт завершён."
 #Foreach-Object {
 #    $content = Get-Content $_.FullName
 
