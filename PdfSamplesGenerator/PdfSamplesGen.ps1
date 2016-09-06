@@ -248,17 +248,19 @@ function PrintByRegCommand ([string]$file,[string]$printer)
     $reg1 = Get-Item -Path Registry::HKEY_CLASSES_ROOT\$ftype1\shell\printto\Command
     if ($reg1 -ne $null)
     { $printt2 = $reg1.Getvalue("").replace("`"%1`"",$file).replace("`"%2`"",$printer).replace("%3","").replace("%4","")
-
-      #	 Start-Process  $printt2	-ErrorVariable err1
-      cmd /c $printt2
-
-      $ptERRORLEVEL = $lastexitcode
-      if ($ptERRORLEVEL -ne 0)
-      { $err1 = $ptERRORLEVEL }
-      else
-      {
-        $err1 = $null
-      }
+		$errF = $null
+      #	 Start-Process  $printt2	-ErrorVariable $errF
+      Invoke-Expression "& $printt2" -ErrorVariable $err1
+		#cmd /c $printt2
+	  
+	  #$ptERRORLEVEL = $null
+   #   $ptERRORLEVEL = $lastexitcode
+   #   if ($ptERRORLEVEL -ne 0)
+   #   { $err1 = $ptERRORLEVEL }
+   #   else
+   #   {
+   #     $err1 = $null
+   #   }
     }
   }
   return $err1;
