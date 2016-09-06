@@ -16,7 +16,7 @@
 #$ErrorActionPreference =  Inquire #"SilentlyContinue" 
 
 #TODO
- Set-StrictMode -Version 2.0
+Set-StrictMode -Version 2.0
 
 $waterMPDF = "d:\!Work\Pdf_c\_Образец_ВодЗнак.pdf"
 function EchoA
@@ -37,10 +37,10 @@ function Wait-KeyPress2 ($keysToSkip)
   $doSleep = $false;
   if ($Host.UI.RawUI.KeyAvailable)
   {
-	$key1=	$host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    $key1 = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     if ($keysToSkip -notcontains $key1)
     {
-	   $Host.UI.RawUI.FlushInputBuffer()
+      $Host.UI.RawUI.FlushInputBuffer()
       $doSleep = $true;
     }
   }
@@ -75,55 +75,55 @@ function printto
   [System.Diagnostics.ProcessStartInfo]$startInfo = New-Object System.Diagnostics.ProcessStartInfo #-Args $file #System.Diagnostics.ProcessStartInfo
 
 
-	$startInfo.FileName = $file
-	$startInfo.Arguments = @($printer)
+  $startInfo.FileName = $file
+  $startInfo.Arguments = @( $printer)
 
-	#$startInfo.RedirectStandardOutput = $true
-	$startInfo.CreateNoWindow = $false
-	$startInfo.UseShellExecute = $true
-	#$startInfo.Username = "DOMAIN\Username"
-	#$startInfo.Password = $password
+  #$startInfo.RedirectStandardOutput = $true
+  $startInfo.CreateNoWindow = $false
+  $startInfo.UseShellExecute = $true
+  #$startInfo.Username = "DOMAIN\Username"
+  #$startInfo.Password = $password
   if ($printer -ne $null)
   {
     #  if ($procForFile.Verbs -notcontains "printto")
     #{    return  "type notcontains 'printto'"		 }
 
-	  $startInfo.Verb =  "printto" 
+    $startInfo.Verb = "printto"
     #Start-Process –FilePath $file -ArgumentList $printer -Verb "printto" -Wait -ErrorVariable err1
   }
   else
   {
-	 echo "Convert $file error "
-  	 return $null
-	#  " $startInfo.Verb =  "print" 
-  #if ($procForFile.Verbs -notcontains "print")
+    echo "Convert $file error "
+    return $null
+    #  " $startInfo.Verb =  "print" 
+    #if ($procForFile.Verbs -notcontains "print")
     #{ return  "type notcontains 'print'"		   }
 
     #Start-Process –FilePath $file -Verb "print" -Wait -ErrorVariable err1
 
   }
 
-	$process = New-Object System.Diagnostics.Process
-	$process.StartInfo = $startInfo
+  $process = New-Object System.Diagnostics.Process
+  $process.StartInfo = $startInfo
 
-		$errP = $null
-	$process.Start() | Write-debug
-	#$standardOut = $process.StandardOutput.ReadToEnd()
-	#$process.WaitForExit()
+  $errP = $null
+  $process.Start() | Write-Debug
+  #$standardOut = $process.StandardOutput.ReadToEnd()
+  #$process.WaitForExit()
 
-	if (!$?)
-	{
-		$errP =	 $Error[0]
-	}
-
-
-	$process
+  if (!$?)
+  {
+    $errP = $Error[0]
+  }
 
 
+  $process
 
-	return $errP;
 
- # return $err1
+
+  return $errP;
+
+  # return $err1
 
 
   #if ($err1 -ne $null)
@@ -141,52 +141,52 @@ if ($pdftk -eq $null)
 
 if (!(Test-Path $waterMPDF))
 {
-	
-	$waterMPDF  =	Split-Path -Parent $pdftk.Path
-	$waterMPDF  =	Split-Path -Parent  $waterMPDF
-    $waterMPDF  =	Join-Path $waterMPDF "Образец_ВодЗнак.pdf"
+
+  $waterMPDF = Split-Path -Parent $pdftk.Path
+  $waterMPDF = Split-Path -Parent $waterMPDF
+  $waterMPDF = Join-Path $waterMPDF "Образец_ВодЗнак.pdf"
 }
-function Get-PdfNumOfPages([string]$outFile)
+function Get-PdfNumOfPages ([string]$outFile)
 {
-	  $dumpData1 = 	& $pdftk "$outFile" dump_data 
-     if (!$?)
-	{  return 0; }
-	 $res11 = $dumpData1 | Select-String -Pattern "NumberOfPages: ([0-9]+)" #"PageMediaNumber: ([0-9]+)"
+  $dumpData1 = & $pdftk "$outFile" dump_data
+  if (!$?)
+  { return 0; }
+  $res11 = $dumpData1 | Select-String -Pattern "NumberOfPages: ([0-9]+)" #"PageMediaNumber: ([0-9]+)"
 
-      $numOfPages = ($res11.Matches[0].Groups[1].value)
-	return  [int]$numOfPages  
+  $numOfPages = ($res11.Matches[0].Groups[1].value)
+  return [int]$numOfPages
 }
 
-function Cut_PdfTo8 ($inFile, $outFileCut ) 
+function Cut_PdfTo8 ($inFile,$outFileCut)
 {
-		  $numOfPages = Get-PdfNumOfPages $inFile
-	[int]$numOfPagesN = [int]$numOfPages
-	  if ($numOfPagesN -gt 8)
-      {
+  $numOfPages = Get-PdfNumOfPages $inFile
+  [int]$numOfPagesN = [int]$numOfPages
+  if ($numOfPagesN -gt 8)
+  {
 
- 					# Write-Debug  $DebugPreference = "Continue" 
-        & $pdftk "$inFile" cat 1-8 output $outFileCut verbose dont_ask | Write-Warning
-          if ($?)
-		  { return (8-$numOfPagesN) }
-      }
-	elseif ($numOfPagesN -ge 1)
-	{
-		return $numOfPagesN; 
-	}
-	 Write-Warning "Cut Pdf To 8 pages something wrong"
-      return $numOfPagesN
+    # Write-Debug  $DebugPreference = "Continue" 
+    & $pdftk "$inFile" cat 1-8 output $outFileCut verbose dont_ask | Write-Warning
+    if ($?)
+    { return (8 - $numOfPagesN) }
+  }
+  elseif ($numOfPagesN -ge 1)
+  {
+    return $numOfPagesN;
+  }
+  Write-Warning "Cut Pdf To 8 pages something wrong"
+  return $numOfPagesN
 }
 
 
 #TODO reorder
-$u7z = Get-Command "7z" -ErrorAction SilentlyContinue 
+$u7z = Get-Command "7z" -ErrorAction SilentlyContinue
 #if ($u7z -eq $null)
 #{ }
 if ($u7z -eq $null)
-{ 
-	$reg1 = Get-Item -Path Registry::HKEY_CURRENT_USER\SOFTWARE\7-Zip
-    if ($reg1 -ne $null)
-    { $u7z = Get-Command ( $reg1.Getvalue("Path") +  "\7z.exe") }
+{
+  $reg1 = Get-Item -Path Registry::HKEY_CURRENT_USER\SOFTWARE\7-Zip
+  if ($reg1 -ne $null)
+  { $u7z = Get-Command ($reg1.Getvalue("Path") + "\7z.exe") }
 
 }
 if ($u7z -eq $null)
@@ -217,38 +217,38 @@ function msgBoxRetryCancel ($x)
 }
 
 
-function PrintByRegCommand([string]$file, [string]$printer)
+function PrintByRegCommand ([string]$file,[string]$printer)
 {
   $err1 = $true
-  
-    $ftype1 = $null
-    if ($file -like "*.jpg" -or $file -like "*.jpeg" -or $file -like "`"*.jpg`"" -or $file -like "`"*.jpeg`"")
-    {
-      $ftype1 = "jpegfile"
-    }
-    elseif ($file -like "*.tif" -or $file -like "*.tiff" -or $file -like "`"*.tif`"" -or $file -like "`"*.tiff`"")
-    {
-      $ftype1 = "TIFImage.Document"
-    }
-    if ($ftype1 -ne $null)
-    {
-      $reg1 = Get-Item -Path Registry::HKEY_CLASSES_ROOT\$ftype1\shell\printto\Command
-      if ($reg1 -ne $null)
-      { $printt2 = $reg1.Getvalue("").replace("`"%1`"",$file).replace("`"%2`"",$printer).replace("%3","").replace("%4","")
 
-        #	 Start-Process  $printt2	-ErrorVariable err1
-        cmd /c $printt2
+  $ftype1 = $null
+  if ($file -like "*.jpg" -or $file -like "*.jpeg" -or $file -like "`"*.jpg`"" -or $file -like "`"*.jpeg`"")
+  {
+    $ftype1 = "jpegfile"
+  }
+  elseif ($file -like "*.tif" -or $file -like "*.tiff" -or $file -like "`"*.tif`"" -or $file -like "`"*.tiff`"")
+  {
+    $ftype1 = "TIFImage.Document"
+  }
+  if ($ftype1 -ne $null)
+  {
+    $reg1 = Get-Item -Path Registry::HKEY_CLASSES_ROOT\$ftype1\shell\printto\Command
+    if ($reg1 -ne $null)
+    { $printt2 = $reg1.Getvalue("").replace("`"%1`"",$file).replace("`"%2`"",$printer).replace("%3","").replace("%4","")
 
-        $ptERRORLEVEL = $lastexitcode
-        if ($ptERRORLEVEL -ne 0)
-        { $err1 = $ptERRORLEVEL }
-        else
-        {
-          $err1 = $null
-        }
+      #	 Start-Process  $printt2	-ErrorVariable err1
+      cmd /c $printt2
+
+      $ptERRORLEVEL = $lastexitcode
+      if ($ptERRORLEVEL -ne 0)
+      { $err1 = $ptERRORLEVEL }
+      else
+      {
+        $err1 = $null
       }
     }
-	return $err1;
+  }
+  return $err1;
 }
 #directory to process
 function Print1 ($file,[string]$obrazcyParentDir)
@@ -263,8 +263,8 @@ function Print1 ($file,[string]$obrazcyParentDir)
   {
     $checkExistance = $true
   }
-	#TODO
-	#echo "obrazcyParentDir = $obrazcyParentDir"
+  #TODO
+  #echo "obrazcyParentDir = $obrazcyParentDir"
   $samplesTargetDirName = "Образцы"
   $sampleSuffix = "_образец"
   $watermarkText = "OBRAZEC" # "образец"
@@ -287,11 +287,11 @@ function Print1 ($file,[string]$obrazcyParentDir)
   $outFile = ("$outFileS" + ".pdf")
   if ($checkExistance)
   {
-    $iOF =  1;
+    $iOF = 1;
     while (Test-Path $outFile)
     {
       $outFile = ("$outFileS(" + $iOF.ToString() + ").pdf")
-      ++$iOF;
+      ++ $iOF;
     }
   }
 
@@ -302,37 +302,37 @@ function Print1 ($file,[string]$obrazcyParentDir)
   }
 
   $outFileCut = $null
-  if($file.Extension -eq ".pdf")
+  if ($file.Extension -eq ".pdf")
   {
 
-        $outFileCut = ("$outFileS" + ".8cut.pdf") #($outFile
+    $outFileCut = ("$outFileS" + ".8cut.pdf") #($outFile
 
 
-        $cutRes =  Cut_PdfTo8 $file.FullName $outFileCut 
-        if (($cutRes -lt 0) -and (Test-Path $outFileCut))
-        {
-          Remove-Item $outFile -Force -ErrorAction SilentlyContinue;
-        
-        # not work & $pdftk $outFileCut multistamp "`"$waterMPDF`"" output $outFile
-        #  Move-Item $outFileCut $outFile -Force
+    $cutRes = Cut_PdfTo8 $file.FullName $outFileCut
+    if (($cutRes -lt 0) -and (Test-Path $outFileCut))
+    {
+      Remove-Item $outFile -Force -ErrorAction SilentlyContinue;
+
+      # not work & $pdftk $outFileCut multistamp "`"$waterMPDF`"" output $outFile
+      #  Move-Item $outFileCut $outFile -Force
 
 
-        }
-        elseif ($cutRes -eq 0)
-        {
-          
-		  $em3= "  Cannot convert $($file.FullName).  Cannot cut tmp file $outFile"
+    }
+    elseif ($cutRes -eq 0)
+    {
 
-			write-warning $em3
-			"[$(get-date)] $em3" >> $logFile
-			Remove-Item $outFile -Force -ErrorAction SilentlyContinue;
-  
-			 return
-        }
-		else
-		{
-			$outFileCut = $null;
-		}
+      $em3 = "  Cannot convert $($file.FullName).  Cannot cut tmp file $outFile"
+
+      Write-Warning $em3
+      "[$(get-date)] $em3" >> $logFile
+      Remove-Item $outFile -Force -ErrorAction SilentlyContinue;
+
+      return
+    }
+    else
+    {
+      $outFileCut = $null;
+    }
   }
   #------------------------------
 
@@ -375,7 +375,7 @@ function Print1 ($file,[string]$obrazcyParentDir)
   }
   else
   {
-    $settingsBackFileName = Join-Path $settingsDir ($SF1 + ".back" )
+    $settingsBackFileName = Join-Path $settingsDir ($SF1 + ".back")
 
   }
   #(rename "$settings" "$SF1.back")
@@ -409,15 +409,15 @@ function Print1 ($file,[string]$obrazcyParentDir)
   showprogressfinished=yes
 "@
 
- if (Test-Path	$waterMPDF)
-	{
+  if (Test-Path $waterMPDF)
+  {
 
-  Out-File "$settings" -Append -Encoding "unicode" -InputObject @"
+    Out-File "$settings" -Append -Encoding "unicode" -InputObject @"
   superimpose=$waterMPDF
   superimposeresolution=
   superimposelayer=bottom
 "@
-}
+  }
   # TODO: showprogress=yes
   #
   # confirmnewfolder=yes
@@ -442,21 +442,21 @@ function Print1 ($file,[string]$obrazcyParentDir)
   # ECHO "watermarktext=$watermarkText" >> "$settings"
   # ECHO >> "$settings"
 
-	$fileToPrint = $null
-	if ($outFileCut -eq $null)
-	{
-		$fileToPrint = $($file.FullName)
-	}
-	else
-	{
-		$fileToPrint = $($outFileCut)
-	}
-	echo "Основной этап конвертации `"$($file.FullName)`" "
+  $fileToPrint = $null
+  if ($outFileCut -eq $null)
+  {
+    $fileToPrint = $($file.FullName)
+  }
+  else
+  {
+    $fileToPrint = $($outFileCut)
+  }
+  echo "Основной этап конвертации `"$($file.FullName)`" "
   [System.Diagnostics.Process]$ptProc,$errP = printto "`"$fileToPrint`"" "`"$PRINTERNAME`""
 
   #$ptSuccess  Silently-ErrorVariable ProcessError -ErrorAction Continue 
-	#$ptProcErrOut = $ptProc.StandardError.ReadToEnd()
-	$endStat = $ptProc.HasExited
+  #$ptProcErrOut = $ptProc.StandardError.ReadToEnd()
+  $endStat = $ptProc.HasExited
 
   #if ($ptErr -ne $null) {
 
@@ -465,85 +465,85 @@ function Print1 ($file,[string]$obrazcyParentDir)
   #  "[$(get-date)] $errPrint" >> $logFile
   # }
   # else
-   
+
   # $printto.exe "in\example.rtf" "$PRINTERNAME"
   #  $ptERRORLEVEL = $lastexitcode
   # if ($ptERRORLEVEL -eq 0) $res11 = & $pdftk "$outFile" dump_data | Select-string -Pattern "PageMediaNumber: ([0-9]*)"
 
-  for ([int]$iW = 0; $true; ++$iW)
+  for ([int]$iW = 0; $true;++ $iW)
   {
     if (Test-Path ($outFile))
     {
-       if ($outFileCut -eq $null)
-	  {
+      if ($outFileCut -eq $null)
+      {
         $outFileCut = ("$outFileS" + ".pdf8cut") #($outFile
 
 
-        $cutRes =  Cut_PdfTo8 $outFile $outFileCut 
+        $cutRes = Cut_PdfTo8 $outFile $outFileCut
         if (($cutRes -lt 0) -and (Test-Path $outFileCut))
         {
           Remove-Item $outFile -Force;
           Move-Item $outFileCut $outFile -Force
         }
-		elseif ($cutRes -eq 0)
-		{
-			$em3= "  Cannot convert $($file.FullName).  Cannot cut tmp file $outFile"
+        elseif ($cutRes -eq 0)
+        {
+          $em3 = "  Cannot convert $($file.FullName).  Cannot cut tmp file $outFile"
 
-			write-warning $em3
-			"[$(get-date)] $em3" >> $logFile
-			Remove-Item $outFile -Force -ErrorAction SilentlyContinue;
+          Write-Warning $em3
+          "[$(get-date)] $em3" >> $logFile
+          Remove-Item $outFile -Force -ErrorAction SilentlyContinue;
 
-		}
-		$outFileCut = $null
-	  }
+        }
+        $outFileCut = $null
+      }
 
       if ($iW -gt 0)
       {
         Write-Host "Конвертация файла `"$($file.FullName)`" завершилась"
       }
       break;
-   }
-	  elseif($ptProc.HasExited -and $ptProc.ExitCode -eq 1)
-	  {
-		  #не очень понятно почему, - возможно. для прог, которые остаются закрытыми.
-		continue
     }
-	  elseif($ptProc.HasExited -and $ptProc.ExitCode -ge 2)
-	  {
-	  	   $errPrint = ("`"$($file.FullName)`"" + " не конвертируется ")
-	   Write-Warning $errPrint
-	   "[$(get-date)] $errPrint" >> $logFile
-		break;
+    elseif ($ptProc.HasExited -and $ptProc.ExitCode -eq 1)
+    {
+      #не очень понятно почему, - возможно. для прог, которые остаются закрытыми.
+      continue
+    }
+    elseif ($ptProc.HasExited -and $ptProc.ExitCode -ge 2)
+    {
+      $errPrint = ("`"$($file.FullName)`"" + " не конвертируется ")
+      Write-Warning $errPrint
+      "[$(get-date)] $errPrint" >> $logFile
+      break;
 
-	} 
-	  elseif ($errP -ne $null )
-	  {
+    }
+    elseif ($errP -ne $null)
+    {
 
-		  $errP2 = $null;
-		if  ($errP.Exception.InnerException.NativeErrorCode -eq 1155)
-		  {
-			  
-			 $errP2 =  PrintByRegCommand "`"$($file.FullName)`""  "`"$PRINTERNAME`""
-			  if ($errP2 -eq $null)
-			  { continue }
-		  }
+      $errP2 = $null;
+      if ($errP.Exception.InnerException.NativeErrorCode -eq 1155)
+      {
 
-	   $errPrint = ("`"$($file.FullName)`"" + " не конвертируется, возможно не имеет печатающей программы :" + $errP.ToString())
-	   Write-Warning $errPrint
-	   "[$(get-date)] $errPrint" >> $logFile
-		break;
+        $errP2 = PrintByRegCommand "`"$($file.FullName)`"" "`"$PRINTERNAME`""
+        if ($errP2 -eq $null)
+        { continue }
+      }
 
-	  }
+      $errPrint = ("`"$($file.FullName)`"" + " не конвертируется, возможно не имеет печатающей программы :" + $errP.ToString())
+      Write-Warning $errPrint
+      "[$(get-date)] $errPrint" >> $logFile
+      break;
+
+    }
 
     else
     {
       $keysToSkip = 's'
       if ($iW -eq 0)
       {
-	     Start-Sleep -Milliseconds 1000
-		continue;
-	  }
-	   elseif ($iW -eq 1)
+        Start-Sleep -Milliseconds 1000
+        continue;
+      }
+      elseif ($iW -eq 1)
       {
         Write-Host "Конвертация файла `"$($file.FullName)`" затянулась. Нажмите `"S`" чтобы пропустить его"
         Start-Sleep -Milliseconds 100
@@ -559,10 +559,10 @@ function Print1 ($file,[string]$obrazcyParentDir)
 
   } # for 
   #else 
-	if ($outFileCut -ne $null)
-	{
-	 Remove-Item $outFileCut -Force;
-	}
+  if ($outFileCut -ne $null)
+  {
+    Remove-Item $outFileCut -Force;
+  }
 
   if ($settingsBackFile -ne $null -and $settingsBackFile.Exists) #(Test-Path "$settings.back")
   {
@@ -602,7 +602,7 @@ $archs =
 function AlgA_Iter
 {
   param($value,$obrazcyParentDir)
-  if ($docExtensions1 -contains  $value.Extension  )
+  if ($docExtensions1 -contains $value.Extension)
   {
 
     Print1 $value $obrazcyParentDir
@@ -622,29 +622,29 @@ if ($args.Count -gt 0 -and $args[0].length -ge 0)
   $targetP = $args[0]
 }
 else
-{ 
-	  #$MyInvocation.
-	#TODO
-	$par2 = Split-Path -Parent $MyInvocation.MyCommand.path
-	$targetP = $par2
-	if ($targetP -eq $null)
-	{ 
-		$targetP = (GEt-item $PSCommandPath).Directory
-			
-	}
-	
-	Echo "Скрипт запущен для $targetP"
-	while ($targetP -eq $null -or !(Test-path $targetP))
-	{
-		echo "Не получилось найти $targetP . Введите вручную"
-		$targetP = Read-Host -Prompt "Не получилось найти $targetP . Введите вручную"
-		if ($targetP -eq $null)
-		{
-			echo "Не получилось найти $targetP . Выходим"
-			return
-		}
-	}
-	# Get-Location 
+{
+  #$MyInvocation.
+  #TODO
+  $par2 = Split-Path -Parent $MyInvocation.MyCommand.Path
+  $targetP = $par2
+  if ($targetP -eq $null)
+  {
+    $targetP = (Get-Item $PSCommandPath).Directory
+
+  }
+
+  echo "Скрипт запущен для $targetP"
+  while ($targetP -eq $null -or !(Test-Path $targetP))
+  {
+    echo "Не получилось найти $targetP . Введите вручную"
+    $targetP = Read-Host -Prompt "Не получилось найти $targetP . Введите вручную"
+    if ($targetP -eq $null)
+    {
+      echo "Не получилось найти $targetP . Выходим"
+      return
+    }
+  }
+  # Get-Location 
 }
 
 
@@ -794,9 +794,9 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
       }
 
       # $aafiles
-       $aafiles[0].pathAr| out-host
+      $aafiles[0].pathAr | Out-Host
       # если папок нет
-      if (@($aafiles | Where-Object { $_.isdir }).length -eq 0)
+      if (@( $aafiles | Where-Object { $_.isdir }).length -eq 0)
       {
 
         #[System.Reflection.Assembly]::LoadWithPartialName("System.IO.Path")
