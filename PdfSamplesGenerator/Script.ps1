@@ -10,7 +10,8 @@
 ##$gh1 = New-Object  PdfWriter.PdfInternal.Ghostscript
 #$ErrorActionPreference =  Inquire #"SilentlyContinue" 
 
-
+#TODO
+ Set-StrictMode -Version 2.0
 
 $waterMPDF = "d:\!Work\Pdf_c\Образец_ВодЗнак.pdf"
 function EchoA
@@ -31,9 +32,10 @@ function Wait-KeyPress2 ($keysToSkip)
   $doSleep = $false;
   if ($Host.UI.RawUI.KeyAvailable)
   {
-
-    if ($host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") -notin $keysToSkip)
-    { $Host.UI.RawUI.FlushInputBuffer()
+	$key1=	$host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    if ($key1 -notin $keysToSkip)
+    {
+	   $Host.UI.RawUI.FlushInputBuffer()
       $doSleep = $true;
     }
   }
@@ -135,7 +137,9 @@ if ($pdftk -eq $null)
 function Get-PdfNumOfPages([string]$outFile)
 {
 	  $dumpData1 = 	& $pdftk "$outFile" dump_data 
-      $res11 = $dumpData1 | Select-String -Pattern "NumberOfPages: ([0-9]+)" #"PageMediaNumber: ([0-9]+)"
+     if (!$?)
+	{  return 0; }
+	 $res11 = $dumpData1 | Select-String -Pattern "NumberOfPages: ([0-9]+)" #"PageMediaNumber: ([0-9]+)"
 
       $numOfPages = ($res11.Matches[0].Groups[1].value)
 	return  [int]$numOfPages  
@@ -156,9 +160,9 @@ function Cut_PdfTo8 ($inFile, $outFileCut )
 
 
 #TODO reorder
-
-if ($u7z -eq $null)
-{ $u7z = Get-Command "7z" -ErrorAction SilentlyContinue }
+$u7z = Get-Command "7z" -ErrorAction SilentlyContinue 
+#if ($u7z -eq $null)
+#{ }
 if ($u7z -eq $null)
 { 
 	$reg1 = Get-Item -Path Registry::HKEY_CURRENT_USER\SOFTWARE\7-Zip
@@ -196,7 +200,7 @@ function msgBoxRetryCancel ($x)
 
 function PrintByRegCommand([string]$file, [string]$printer)
 {
-  $err1 = $null
+  $err1 = $true
   
     $ftype1 = $null
     if ($file -like "*.jpg" -or $file -like "*.jpeg" -or $file -like "`"*.jpg`"" -or $file -like "`"*.jpeg`"")
@@ -225,14 +229,14 @@ function PrintByRegCommand([string]$file, [string]$printer)
         }
       }
     }
-	return $err;
+	return $err1;
 }
 #directory to process
 function Print1 ($file,[string]$obrazcyParentDir)
 {
 
   $checkExistance = $false;
-  if ($obrazcyParentDir -eq $null)
+  if ($obrazcyParentDir -eq $null -or ($obrazcyParentDir.length -eq 0))
   {
     $obrazcyParentDir = $file.Directory
   }
@@ -240,7 +244,8 @@ function Print1 ($file,[string]$obrazcyParentDir)
   {
     $checkExistance = $true
   }
-
+	#TODO
+	echo "obrazcyParentDir = $obrazcyParentDir"
   $samplesTargetDirName = "Образцы"
   $sampleSuffix = "_образец"
   $watermarkText = "OBRAZEC" # "образец"
@@ -445,7 +450,7 @@ function Print1 ($file,[string]$obrazcyParentDir)
         $outFileCut = ("$outFileS" + ".pdf8cut") #($outFile
 
 
-        $cutRes =  Cut_PdfTo8 $outFile, $outFileCut 
+        $cutRes =  Cut_PdfTo8 $outFile $outFileCut 
         if ($cutRes -and (Test-Path $outFileCut))
         {
           Remove-Item $outFile -Force;
@@ -577,7 +582,21 @@ if ($args.Count -gt 0 -and $args[0].length -ge 0)
   $targetP = $args[0]
 }
 else
-{ $targetP = Get-Location }
+{ 
+	  #$MyInvocation.
+	#TODO
+	$targetP =  (GEt-item $PSCommandPath).Directory
+	Echo "Скрипт запущен для $targetP"
+	while (!(Test-path $targetP))
+	{
+		$targetP = Read-Host -Prompt "Не получилось найти $targetP . Введите вручную"
+		if ($targetP -eq $null)
+		{
+			return
+			}
+	}
+	# Get-Location 
+}
 
 
 function ExtractSpecified
@@ -728,7 +747,7 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
       # $aafiles
        $aafiles[0].pathAr| out-host
       # если папок нет
-      if (($aafiles | Where-Object { $_.isdir }).length -eq 0)
+      if (@($aafiles | Where-Object { $_.isdir }).length -eq 0)
       {
 
         #[System.Reflection.Assembly]::LoadWithPartialName("System.IO.Path")
