@@ -479,6 +479,15 @@ function Print1 ($file,[string]$obrazcyParentDir)
           Remove-Item $outFile -Force;
           Move-Item $outFileCut $outFile -Force
         }
+		else
+		{
+			$em3= "  Cannot convert $($file.FullName).  Cannot cut tmp file $outFile"
+
+			write-warning $em3
+			"[$(get-date)] $em3" >> $logFile
+			Remove-Item $outFile -Force -ErrorAction SilentlyContinue;
+
+		}
 		$outFileCut = $null
 	  }
 
