@@ -427,7 +427,7 @@ function Print1 ($file,[string]$obrazcyParentDir)
   watermarktext=$watermarkText
   watermarkfontsize=180
   watermarkrotation=c2c
-  watermarkcolor=
+  watermarkcolor=#DFDFDF
   watermarkfontname=arial.ttf
   watermarkoutlinewidth=2
   watermarklayer=top
