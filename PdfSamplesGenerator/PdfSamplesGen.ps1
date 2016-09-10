@@ -425,7 +425,7 @@ function Print1 ($file,[string]$obrazcyParentDir)
   showsettings=never
   showpdf=no
   watermarktext=$watermarkText
-  watermarkfontsize=40
+  watermarkfontsize=180
   watermarkrotation=c2c
   watermarkcolor=
   watermarkfontname=arial.ttf
@@ -438,14 +438,24 @@ function Print1 ($file,[string]$obrazcyParentDir)
   showprogressfinished=yes
 "@
 
-  if (Test-Path $waterMPDF)
-  {
 
+if ((".jpg", ".jpeg" ) -inotcontains $file.Extension )#расширения без фона пропускаем
+{  
+	if (Test-Path $waterMPDF)
+    {
+		$watermarkSuperimposelayer = "bottom"
+		
+
+		#$watermarkSuperimposelayer = "top"
+	
+	  #  professional version -  superimposeresolution=vector
     Out-File "$settings" -Append -Encoding "unicode" -InputObject @"
   superimpose=$waterMPDF
   superimposeresolution=
-  superimposelayer=bottom
+  superimposelayer=$watermarkSuperimposelayer
 "@
+	  }
+
   }
   # TODO: showprogress=yes
   #
