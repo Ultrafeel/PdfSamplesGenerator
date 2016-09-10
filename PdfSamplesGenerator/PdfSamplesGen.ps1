@@ -974,9 +974,15 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
 #			$pd1 =  "cc.pdf" # "ТЕОРИЯ АВТОМАТИЧЕСКОГО УПРАВЛЕНИЯ ДЛЯ «ЧАЙНИКОВ» tau_dummy.pdf"
 #$IMag.Convert( "$targetP\$pd1[0-7]" , "-delete 8--1")
 
+$Printers = Get-WmiObject -Class Win32_Printer
+$initiallyDefaultPrinter = $Printers|where { $_.Default }
 
 Algs $targetP $false $null
 
+if ($initiallyDefaultPrinter -ne $null)
+{
+	$initiallyDefaultPrinter.SetDefaultPrinter()	
+}
 echo "Обработка $targetP завершена. Скрипт завершён."
 #Foreach-Object {
 #    $content = Get-Content $_.FullName
