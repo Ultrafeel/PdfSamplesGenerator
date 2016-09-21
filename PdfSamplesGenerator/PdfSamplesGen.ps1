@@ -78,6 +78,7 @@ function Wait-KeyPress2 ($keysToSkip)
 
 }
 
+
 function printto
 {
   param([string]$file,[string]$printer)
@@ -104,9 +105,10 @@ function printto
   }
   else
   {
-    echo "Convert $file error "
-    return $null
-    #  " $startInfo.Verb =  "print" 
+   # echo "Convert $file error "
+   # return $null
+    $startInfo.Verb =  "print" 
+    $startInfo.Arguments = $null
     #if ($procForFile.Verbs -notcontains "print")
     #{ return  "type notcontains 'print'"		   }
 
@@ -144,6 +146,14 @@ function printto
   #return $true;
 
 }
+
+function print_to_usingDefault
+{
+	param([string]$file,[string]$printer)
+	$null = (Get-WmiObject -ComputerName . -Class Win32_Printer -Filter "Name='$printer'").SetDefaultPrinter()
+	printto $file
+}
+
 #$printto = "d:\INSTALL\!office\Bullzip\files\printto.exe"
 
 $pdftk = Get-Command "pdftk" -ErrorAction SilentlyContinue
@@ -457,6 +467,19 @@ if ((".jpg", ".jpeg" ) -inotcontains $file.Extension )#расширения бе
 	  }
 
   }
+
+
+	<#
+	
+	-dPDFSETTINGS=/screen   (screen-view-only quality, 72 dpi images)
+-dPDFSETTINGS=/ebook    (low quality, 150 dpi images)
+-dPDFSETTINGS=/printer  (high quality, 300 dpi images)
+-dPDFSETTINGS=/prepress (high quality, color preserving, 300 dpi imgs)
+-dPDFSETTINGS=/default  (almost identical to /screen)
+	
+	 target=ebook - pdf qulity.
+
+	#>
   # TODO: showprogress=yes
   #
   # confirmnewfolder=yes
@@ -974,11 +997,18 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
 #			$pd1 =  "cc.pdf" # "ТЕОРИЯ АВТОМАТИЧЕСКОГО УПРАВЛЕНИЯ ДЛЯ «ЧАЙНИКОВ» tau_dummy.pdf"
 #$IMag.Convert( "$targetP\$pd1[0-7]" , "-delete 8--1")
 
-$Printers = Get-WmiObject -Class Win32_Printer
-$initiallyDefaultPrinter = $Printers|where { $_.Default }
+# $Printers = Get-WmiObject -Class Win32_Printer $Printers|where { $_.Default }
+$initiallyDefaultPrinter =  Get-WmiObject -ComputerName . -Class Win32_Printer -Filter "Default=True"
 
 Algs $targetP $false $null
 
+
+<#
+$defprinter = (Get-WmiObject -ComputerName . -Class Win32_Printer -Filter "Default=True").Name
+$null = (Get-WmiObject -ComputerName . -Class Win32_Printer -Filter "Name='My Desired Printer'").SetDefaultPrinter()
+get-childitem "\\nas\directory" | % { Start-Process -FilePath $_.VersionInfo.FileName –Verb Print -PassThru }
+$null = (Get-WmiObject -ComputerName . -Class Win32_Printer -Filter "Name='$defprinter'").SetDefaultPrinter()
+#>
 if ($initiallyDefaultPrinter -ne $null)
 {
 	$initiallyDefaultPrinter.SetDefaultPrinter()	
