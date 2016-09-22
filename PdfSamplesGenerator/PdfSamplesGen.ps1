@@ -991,6 +991,7 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
 
 }
 
+
 # $IMag = New-Object -ComObject "ImageMagickObject.MagickImage.1"
 # $msgs = $IMag.Convert "logo:" -format "%m,%h,%w" info: 
 # $msgs = $IMag.Convert("logo:","-format","%m,%h,%w","info:")	   $targetP\$($pd1)C.pdf

@@ -13,7 +13,7 @@
     <PowerShellVersion>v4</PowerShellVersion>
     <ProcessorArchitecture />
     <RequiredModules />
-    <DebugArguments>"d:\!Work\Pdf_c\Тестовый каталог"</DebugArguments>
+    <DebugArguments>"d:\!Work\Pdf_c\Образцы файлов всех расширений"</DebugArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -35,6 +35,7 @@
   <ItemGroup />
   <ItemGroup>
     <Compile Include="PdfSamplesGen.ps1" />
+    <Compile Include="Script1Develop.ps1" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Target Name="Build" />

@@ -6,7 +6,8 @@
             "type": "PowerShell",
             "request": "launch",
             "program": "${file}",
-            "args": ["\"d:\\!Work\\Pdf_c\\Тестовый каталог\""],
+            //["\"d:\\!Work\\Pdf_c\\Тестовый каталог\""]
+            "args": ["\"d:\\!Work\\Pdf_c\\Образцы файлов всех расширений\""],
             "cwd": "${file}"
         }
     ]
