@@ -64,9 +64,27 @@ $cdDocToPrint.PublishToPDF($outFile)
 #$cdDocToPrint.PrintOut
 $cdDocToPrint.Close
 }
-
-
+function Invoke-Method0 {
+  param(
+    [__ComObject] $object,
+    [String] $methodName,
+    $methodParameters
+  )
+  $output = $object.GetType().InvokeMember($methodName,"InvokeMethod",$NULL,$object,$methodParameters)
+  if ( $output ) { $output }
+}
+function Invoke-Method2 {
+  param(
+    [__ComObject] $object,
+    [String] $methodName,
+    $methodParameters
+  )
+  $output = $object.GetType().InvokeMember($methodName,[System.Reflection.BindingFlags]::InvokeMethod,
+	  $NULL,$object,$methodParameters)
+  if ( $output ) { $output }
+}
 $cdr_doc =  $cdraw.OpenDocument($file.FullName)  #$cdraw.OpenDocument($file.FullName) AsCopy AsCopy
+$cdr_doc.SetDocVisible($false)
 echo $cdr_doc.Pages.Count
 for ($i = 0; $i -lt 9 -and ($i -lt $cdr_doc.Pages.Count); ++$i )
 {
@@ -83,8 +101,32 @@ for ($i = 0; $i -lt 9 -and ($i -lt $cdr_doc.Pages.Count); ++$i )
 $consumerkey ="xvz1evFS4wEEPTGEFPHBog"
 $encconsumerkey= $enc.GetBytes($watermForCorel)
   #$watermForCorel.   # 0x80131501
-  $watLayer.Import($encconsumerkey) 
+	#Read-Host -Prompt "wowo"
+#	$watLayer.GetType().InvokeMember("Import", [System.Reflection.BindingFlags]::InvokeMethod,
+#    $null,  ## Binder
+#    $watLayer,  ## Target
+#    ([Object[]]@($watermForCorel)),  ## Args
+#    $null,  ## Modifiers
+#    $null,  ## Culture
+#    ([String[]]$NamedParameters)  ## NamedParameters
+#)
+	 [System.Reflection.Assembly]::LoadWithPartialName("System.Runtime.InteropServices")
+	[System.Runtime.InteropServices.BStrWrapper]$ww2= ($watermForCorel)
+	[System.String]$ww4 =  $watermForCorel
+	Invoke-Method2 $watLayer "Import" $ww4
+  $watLayer.Import($ww4 )
 }
+
+
+<#I have managed to get this working using the InvokeMember method of System.__ComObject. In order to pass multiple parameters to the method, simply enclose them in parentheses.
+
+An example of the line of code is shown here:
+
+PS C:> $usercontacts=[System.__ComObject].InvokeMember("GetSharedDefaultFolder" [System.Reflection.BindingFlags]::InvokeMethod,$null,$mapi,($user,10))
+
+$user is the recipient object previously set up. $mapi is the MAPI namespace object (also set up previously).
+
+#>
 # Layers
 # $cdraw.
 PublishCorelDraw $cdr_doc ($file.FullName + ".pdf")
