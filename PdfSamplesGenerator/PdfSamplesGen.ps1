@@ -289,6 +289,42 @@ function PrintByRegCommand ([string]$file,[string]$printer)
   }
   return $err1;
 }
+
+$cdraw = $null
+
+function PrintCorelDraw([string]$fileToPrint, [string]$printer)
+{
+	if ($cdraw -eq $null)
+	{
+		$cdraw = New-Object -Com  CorelDRAW.Application
+		$cdraw.Visible = $false
+	}
+
+	$cdDocToPrint =  $cdraw.OpenDocument($fileToPrint)  #$cdraw.OpenDocument($file.FullName) AsCopy AsCopy
+	$cdDocToPrint.SetDocVisible($false)
+	
+	$prs  = $cdDocToPrint.PrintSettings
+	#$prs|gm
+	$prs.Copies = 3
+	$prs.PrintRange = 3 # 3 == PrnPrintRange VGCore.prnPageRange
+	$prs.PageRange = "1-9"
+	$prs.Options.PrintJobInfo = True
+	$prs.Printer = $printer
+	if ($prs.Printer -eq $null)
+		{return $true}
+	if (!$prs.Printer.Ready())
+	{
+		return $true	
+	}
+
+
+	#With .PostScript
+	#.DownloadType1 = True
+	#.Level = prnPSLevel3
+	$cdDocToPrint.PrintOut()
+	$cdDocToPrint.Close()
+
+}
 #directory to process
 function Print1 ($file,[string]$obrazcyParentDir)
 {
@@ -516,12 +552,24 @@ if ((".jpg", ".jpeg" ) -inotcontains $file.Extension )#расширения бе
     $fileToPrint = $($outFileCut)
   }
   echo "Основной этап конвертации `"$($file.FullName)`" "
-  [System.Diagnostics.Process]$ptProc,$errP = printto "`"$fileToPrint`"" "`"$PRINTERNAME`""
+	
+	$errP = $false
+  if ($file.extension -eq ".cdr")
+  {
+	 $errP = PrintCorelDraw $fileToPrint $PRINTERNAME
+  }
+  if ($errP -ne $null)
+  { 
+	 [System.Diagnostics.Process]$ptProc,$errP = printto "`"$fileToPrint`"" "`"$PRINTERNAME`"" 
+  }
 
   #$ptSuccess  Silently-ErrorVariable ProcessError -ErrorAction Continue 
   #$ptProcErrOut = $ptProc.StandardError.ReadToEnd()
+	$endStat = $true
+	if ($ptProc -ne $null)
+   {
   $endStat = $ptProc.HasExited
-
+   }
   #if ($ptErr -ne $null) {
 
   #  $errPrint = ("`"$($file.FullName)`"" + " не имеет печатающей программы :" + $ptErr.ToString())
@@ -595,6 +643,7 @@ if ((".jpg", ".jpeg" ) -inotcontains $file.Extension )#расширения бе
 			continue 
 		}
       }
+
 
       $errPrint = ("`"$($file.FullName)`"" + " не конвертируется, возможно не имеет печатающей программы :" + $errP.ToString())
       Write-Warning $errPrint

@@ -61,7 +61,7 @@ $cdDocToPrint.PublishToPDF($outFile)
 ##.Level = prnPSLevel3
 
 # $cdDocToPrint.O
-#$cdDocToPrint.PrintOut
+#$cdDocToPrint.PrintOut()
 $cdDocToPrint.Close
 }
 function Invoke-Method0 {
@@ -83,6 +83,9 @@ function Invoke-Method2 {
 	  $NULL,$object,$methodParameters)
   if ( $output ) { $output }
 }
+
+
+
 $cdr_doc =  $cdraw.OpenDocument($file.FullName)  #$cdraw.OpenDocument($file.FullName) AsCopy AsCopy
 $cdr_doc.SetDocVisible($false)
 echo $cdr_doc.Pages.Count
