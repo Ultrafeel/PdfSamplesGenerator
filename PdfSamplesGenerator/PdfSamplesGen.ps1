@@ -28,7 +28,7 @@ function EchoA
 }
 
 $logFile = $null
-
+$waitPeriodMs = 100
 function Wait-KeyPress2 ($keysToSkip)
 {
   #Write-Host $prompt , $skipMessage	$prompt='Press "S" key to skip this',
@@ -60,7 +60,7 @@ function Wait-KeyPress2 ($keysToSkip)
 
   if ($doSleep)
   {
-    Start-Sleep -Milliseconds 100
+    Start-Sleep -Milliseconds $waitPeriodMs
     return $false;
   }
   else
@@ -301,15 +301,28 @@ function PrintCorelDraw([string]$fileToPrint, [string]$printer)
 	}
 
 	$cdDocToPrint =  $cdraw.OpenDocument($fileToPrint)  #$cdraw.OpenDocument($file.FullName) AsCopy AsCopy
-	$cdDocToPrint.SetDocVisible($false)
+	#$cdDocToPrint.SetDocVisible($false)
 	
 	$prs  = $cdDocToPrint.PrintSettings
 	#$prs|gm
 	$prs.Copies = 3
 	$prs.PrintRange = 3 # 3 == PrnPrintRange VGCore.prnPageRange
-	$prs.PageRange = "1-9"
-	$prs.Options.PrintJobInfo = True
-	$prs.Printer = $printer
+	$prs.PageRange = "1-8"
+	#$prs.Options.PrintJobInfo = $True
+
+	if ($prs.Printer.Name -ne $printer)
+	{
+		for ($iPr = 0 ; $iPr -lt $cdraw.Printers.Count; $i++)
+		{
+			$pr2 = $cdraw.Printers($iPr)
+			if ($pr2.Name -eq $printer)
+			{
+				$prs.Printer = $pr2
+			}
+
+		}
+	}
+
 	if ($prs.Printer -eq $null)
 		{return $true}
 	if (!$prs.Printer.Ready())
@@ -323,6 +336,56 @@ function PrintCorelDraw([string]$fileToPrint, [string]$printer)
 	#.Level = prnPSLevel3
 	$cdDocToPrint.PrintOut()
 	$cdDocToPrint.Close()
+
+}
+
+$InDesign = $null
+function PrinInDesign([string]$fileToPrint, [string]$printer)
+{
+	if ($InDesign -eq $null)
+	{
+	    $InDesign = New-Object -Com  InDesign.Application
+
+	}
+	if ($InDesign -eq $null)
+	{ 
+		return $false
+	}
+	<#$Awindows =  $InDesign.ActiveWindow 
+	#$Awindows.Minimize()
+	$windows1 =  $InDesign.Windows
+	$window1 = $windows1.FirstItem()
+	if ($window1 -ne $null)
+	{
+		$window1.Minimize()
+	}#>
+	   #idDefault = 0x44666c74,
+        #idOpenOriginal = 0x4f704f72,
+        #idOpenCopy = 0x4f704370
+	$indd_doc =  $InDesign.Open($fileToPrint, $false, 0x4f704370)  
+#$indd_doc.SetDocVisible($false)"InDesign.idOpenOptions.idOpenCopy"
+  #$PRINTERNAMe = "Bullzip PDF Printer"
+#  $printPresetName = $printer.Replace(" ","_") + "8";
+#  $printPreset = $InDesign.PrinterPresets.Item($printPresetName)
+#  if ($printPreset -eq $null)
+#  {
+#	  $printPreset = $InDesign.PrinterPresets.Add($printPresetName)
+#$printPreset.Printer = $printer
+#$printPreset.Sequence = "1-9"
+#	  }
+
+$printPref = $indd_doc.PrintPreferences
+$printPref.PageRange = [System.Runtime.InteropServices.BStrWrapper]"1-9"
+$printPref.printer = $printer
+$indd_doc.PrintOut($false)
+
+$InDesign.WaitForAllTasks() 
+	#Constant idAsk = 1634954016 (&H61736b20)
+#Constant idNo = 1852776480 (&H6e6f2020)
+#    Default member of InDesign.idSaveOptions
+#    Does not save changes.
+$indd_doc.Close(1852776480)
+
 
 }
 #directory to process
@@ -554,21 +617,26 @@ if ((".jpg", ".jpeg" ) -inotcontains $file.Extension )#расширения бе
   echo "Основной этап конвертации `"$($file.FullName)`" "
 	
 	$errP = $false
+	[System.Diagnostics.Process]$ptProc = $null
   if ($file.extension -eq ".cdr")
   {
 	 $errP = PrintCorelDraw $fileToPrint $PRINTERNAME
   }
+  elseif ($file.extension -eq ".indd")
+  {
+	  $errP = PrinInDesign $fileToPrint $PRINTERNAME
+  }
   if ($errP -ne $null)
   { 
-	 [System.Diagnostics.Process]$ptProc,$errP = printto "`"$fileToPrint`"" "`"$PRINTERNAME`"" 
+	 $ptProc,$errP = printto "`"$fileToPrint`"" "`"$PRINTERNAME`"" 
   }
 
   #$ptSuccess  Silently-ErrorVariable ProcessError -ErrorAction Continue 
   #$ptProcErrOut = $ptProc.StandardError.ReadToEnd()
-	$endStat = $true
+	$endStat = $null
 	if ($ptProc -ne $null)
    {
-  $endStat = $ptProc.HasExited
+	$endStat = $ptProc.HasExited
    }
   #if ($ptErr -ne $null) {
 
@@ -615,21 +683,30 @@ if ((".jpg", ".jpeg" ) -inotcontains $file.Extension )#расширения бе
       }
       break;
     }
-    elseif ($ptProc.HasExited -and $ptProc.ExitCode -eq 1)
+    elseif ($ptProc -ne$null)
+	{  
+	  if ($ptProc.HasExited -and $ptProc.ExitCode -eq 1)
     {
       #1 -, но печатает, такое поведение не очень понятно почему, например у AcrobReader
 	   #- возможно. для прог, которые остаются открытыми.
       continue
     }
-    elseif ($ptProc.HasExited -and $ptProc.ExitCode -ge 2)
+    elseif ($ptProc.HasExited -and $ptProc.ExitCode -eq 8985 -and $file.Extension -eq ".rtf")
     {
-      $errPrint = ("`"$($file.FullName)`"" + " не конвертируется ")
+      #непонятно
+      continue
+    } 
+	elseif ($ptProc.HasExited -and $ptProc.ExitCode -ge 2 -and ($iW -gt (100000 /$waitPeriodMs )))
+    {
+      $errPrint = ("`"$($file.FullName)`"" + " не конвертируется. Errcode = " + $ptProc.ExitCode)
       Write-Warning $errPrint
       "[$(get-date)] $errPrint" >> $logFile
       break;
 
     }
-    elseif ($errP -ne $null)
+    }# ptProc
+
+		if ($errP -ne $null)
     {
 
       $errP2 = $null;
@@ -651,7 +728,6 @@ if ((".jpg", ".jpeg" ) -inotcontains $file.Extension )#расширения бе
       break;
 
     }
-
     else
     {
 		if ($ptProc.HasExited -eq $null)
@@ -661,13 +737,13 @@ if ((".jpg", ".jpeg" ) -inotcontains $file.Extension )#расширения бе
       $keysToSkip = 's'
       if ($iW -eq 0)
       {
-        Start-Sleep -Milliseconds 1000
+        Start-Sleep -Milliseconds $(10*$waitPeriodMs)
         continue;
       }
       elseif ($iW -eq 1)
       {
         Write-Host "Конвертация файла `"$($file.FullName)`" затянулась. Нажмите `"S`" чтобы пропустить его"
-        Start-Sleep -Milliseconds 100
+        Start-Sleep -Milliseconds $waitPeriodMs
         continue
 
       }
@@ -681,7 +757,7 @@ if ((".jpg", ".jpeg" ) -inotcontains $file.Extension )#расширения бе
     }
 
   } # for 
-  #else 
+
   if ($outFileCut -ne $null)
   {
     Remove-Item $outFileCut -Force;
@@ -735,7 +811,7 @@ function AlgA_Iter
     Print1 $value $obrazcyParentDir
   }
 
-  echo $value.FullName | Write-Debug
+  Write-Debug  $value.FullName
 }
 
 #not in PS2 !! echo $MyInvocation.PSCommandPath
@@ -951,7 +1027,7 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
 		$aTrgetFPath =  @($aFfiles[$deepest_firstIndex].pathAr )
 		  if ($aTrgetFPath.Count -lt $depth)
 		  {
-			  Write-DebugDebug "pathAr strange"
+			  Write-Debug  "pathAr strange"
 			  $aFfiles[$deepest_firstIndex].pathAr =  $aFfiles[$deepest_firstIndex].Path.Split('\')
 			 $aTrgetFPath = $aFfiles[$deepest_firstIndex].pathAr
 
