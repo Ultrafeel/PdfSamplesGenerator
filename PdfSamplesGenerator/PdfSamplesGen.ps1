@@ -18,7 +18,6 @@
 #TODO
 Set-StrictMode -Version 2.0
 
-$waterMPDF = "d:\!Work\Pdf_c\_Образец_ВодЗнак.pdf"
 function EchoA
 {
   for ($i = 0; $i -lt $args.length; $i++)
@@ -159,6 +158,7 @@ function print_to_usingDefault
 $pdftk = Get-Command "pdftk" -ErrorAction SilentlyContinue
 if ($pdftk -eq $null)
 { $pdftk = Get-Command "C:\Program Files (x86)\PDFtk\bin\pdftk.exe" }
+$waterMPDF = "d:\!Work\Pdf_c\_Образец_ВодЗнак.pdf"
 
 if (!(Test-Path $waterMPDF))
 {
@@ -312,12 +312,13 @@ function PrintCorelDraw([string]$fileToPrint, [string]$printer)
 
 	if ($prs.Printer.Name -ne $printer)
 	{
-		for ($iPr = 0 ; $iPr -lt $cdraw.Printers.Count; $i++)
+		for ($iPr = 0 ; $iPr -lt $cdraw.Printers.Count; $iPr++)
 		{
 			$pr2 = $cdraw.Printers($iPr)
 			if ($pr2.Name -eq $printer)
 			{
 				$prs.Printer = $pr2
+				break;
 			}
 
 		}
@@ -548,15 +549,19 @@ function Print1 ($file,[string]$obrazcyParentDir)
 "@
 
 
-if ((".jpg", ".jpeg" ) -inotcontains $file.Extension )#расширения без фона пропускаем
-{  
+ 
 	if (Test-Path $waterMPDF)
     {
+		$watermarkSuperimposelayer = ""
+if ((".jpg", ".jpeg" ) -inotcontains $file.Extension )#расширения без фона пропускаем
+{ 	
 		$watermarkSuperimposelayer = "bottom"
 		
-
-		#$watermarkSuperimposelayer = "top"
-	
+  }
+		else
+		{
+		$watermarkSuperimposelayer = "top"
+	}
 	  #  professional version -  superimposeresolution=vector
     Out-File "$settings" -Append -Encoding "unicode" -InputObject @"
   superimpose=$waterMPDF
@@ -565,7 +570,7 @@ if ((".jpg", ".jpeg" ) -inotcontains $file.Extension )#расширения бе
 "@
 	  }
 
-  }
+
 
 
 	<#
@@ -704,6 +709,10 @@ if ((".jpg", ".jpeg" ) -inotcontains $file.Extension )#расширения бе
       break;
 
     }
+		if ($ptProc.HasExited -eq $null)
+		{
+			Write-Debug "($ptProc).HasExited -eq null"
+		}
     }# ptProc
 
 		if ($errP -ne $null)
@@ -730,10 +739,7 @@ if ((".jpg", ".jpeg" ) -inotcontains $file.Extension )#расширения бе
     }
     else
     {
-		if ($ptProc.HasExited -eq $null)
-		{
-			Write-Debug "($ptProc).HasExited -eq null"
-		}
+
       $keysToSkip = 's'
       if ($iW -eq 0)
       {
