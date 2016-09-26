@@ -31,6 +31,38 @@ else
   # Get-Location 
 }
 
+$files = $targetP | Get-ChildItem -Filter "*.indd"
+$file = $files[1]
+$InDesign = New-Object -Com  InDesign.Application
+
+        #idDefault = 0x44666c74,
+        #idOpenOriginal = 0x4f704f72,
+        #idOpenCopy = 0x4f704370
+$indd_doc =  $InDesign.Open($file.FullName, $false, 0x4f704370)  
+#$indd_doc.SetDocVisible($false)"InDesign.idOpenOptions.idOpenCopy"
+  $PRINTERNAMe = "Bullzip PDF Printer"
+#  $printPresetName = $PRINTERNAMe.Replace(" ","_") + "9";
+#  $printPreset = $InDesign.PrinterPresets.Item($printPresetName)
+#  if ($printPreset -eq $null)
+#  {
+#	  $printPreset = $InDesign.PrinterPresets.Add($printPresetName)
+#$printPreset.Printer = $PRINTERNAMe
+#$printPreset.Sequence = "1-9"
+#	  }
+
+$printPref = $indd_doc.PrintPreferences
+$printPref.PageRange = "1-9"
+$printPref.printer = $PRINTERNAMe
+$indd_doc.PrintOut($false)
+
+#Constant idNo = 1852776480 (&H6e6f2020)
+#    Default member of InDesign.idSaveOptions
+#    Does not save changes.
+$indd_doc.Close(1852776480)
+
+#######################################################
+
+throw "end"
 $files = $targetP | Get-ChildItem -Filter "*.cdr"
 $file = $files[0]
 $cdraw = New-Object -Com  CorelDRAW.Application
