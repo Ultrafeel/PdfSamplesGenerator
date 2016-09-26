@@ -13,10 +13,11 @@
 #$gh1 = New-Object  Bullzip.PdfWriter.ComPdfInternal
 #$gh1.pdftk()
 ##$gh1 = New-Object  PdfWriter.PdfInternal.Ghostscript
-#$ErrorActionPreference =  "Inquire" #"SilentlyContinue" 
+#$ErrorActionPreference =  "Inquire" #
 
 #TODO
 Set-StrictMode -Version 2.0
+$scriptStartDate = Get-Date
 
 function EchoA
 {
@@ -26,6 +27,11 @@ function EchoA
   }
 }
 
+#trap
+#{
+#	"Hey Error: $_"
+#	continue	
+#}
 $logFile = $null
 $waitPeriodMs = 100
 function Wait-KeyPress2 ($keysToSkip)
@@ -119,19 +125,31 @@ function printto
   $process.StartInfo = $startInfo
 
   $errP = $null
-  $process.Start() | Write-Debug
+	
+	#Return Values:
+	#true if a process resource is started; false if no new process resource is started (for example, if an existing process is reused).
+
+
+
+	$newStarted =  $null
+ try
+  {
+	$newStarted = $process.Start() 
+
+	  if (!$?)
+	  {
+		$errP = $Error[0]
+	  }
+	} 
+	catch
+	{
+		Write-Debug	 " process.Start  trapped:$_ "
+		$errP = $_
+	}
   #$standardOut = $process.StandardOutput.ReadToEnd()
   #$process.WaitForExit()
 
-  if (!$?)
-  {
-    $errP = $Error[0]
-  }
-
-
   $process
-
-
 
   return $errP;
 
@@ -313,9 +331,10 @@ function PrintCorelDraw([string]$fileToPrint, [string]$printer)
 	if ($prs.Printer.Name -ne $printer)
 	{
 		for ($iPr = 0 ; $iPr -lt $cdraw.Printers.Count; $iPr++)
-		{
+		{		
+			$pr2 = $null
 			$pr2 = $cdraw.Printers($iPr)
-			if ($pr2.Name -eq $printer)
+			if ($pr2 -ne $null -and ($pr2.Name -eq $printer))
 			{
 				$prs.Printer = $pr2
 				break;
@@ -326,6 +345,11 @@ function PrintCorelDraw([string]$fileToPrint, [string]$printer)
 
 	if ($prs.Printer -eq $null)
 		{return $true}
+	if ($prs.Printer.Name -ne $printer)
+	{
+		return $true	
+	}
+
 	if (!$prs.Printer.Ready())
 	{
 		return $true	
@@ -339,7 +363,20 @@ function PrintCorelDraw([string]$fileToPrint, [string]$printer)
 	$cdDocToPrint.Close()
 
 }
+function TestFileWritable($file1)
+{
+	if (!(Test-Path $file1)	)
+	{
+		return $false
+	}
 
+		try {
+			 [IO.File]::OpenWrite($file1).close();
+			$true
+		}
+		catch { 
+			$false}	
+}
 $InDesign = $null
 function PrinInDesign([string]$fileToPrint, [string]$printer)
 {
@@ -372,15 +409,15 @@ function PrinInDesign([string]$fileToPrint, [string]$printer)
 #  {
 #	  $printPreset = $InDesign.PrinterPresets.Add($printPresetName)
 #$printPreset.Printer = $printer
-#$printPreset.Sequence = "1-9"
+#$printPreset.Sequence = "1-8"
 #	  }
 
 $printPref = $indd_doc.PrintPreferences
-$printPref.PageRange = [System.Runtime.InteropServices.BStrWrapper]"1-9"
+#$printPref.PageRange = [System.Runtime.InteropServices.BStrWrapper]"1-9"
 $printPref.printer = $printer
 $indd_doc.PrintOut($false)
-
-$InDesign.WaitForAllTasks() 
+#Return value: A list of task states for task that finished. Type: Array of idTaskState enumerators
+$taskStates  = $InDesign.WaitForAllTasks() 
 	#Constant idAsk = 1634954016 (&H61736b20)
 #Constant idNo = 1852776480 (&H6e6f2020)
 #    Default member of InDesign.idSaveOptions
@@ -550,18 +587,18 @@ function Print1 ($file,[string]$obrazcyParentDir)
 
 
  
-	if (Test-Path $waterMPDF)
+if ((".jpg", ".jpeg" ) -inotcontains $file.Extension )#расширения без фона пропускаем
+{
+	 	if (Test-Path $waterMPDF)
     {
 		$watermarkSuperimposelayer = ""
-if ((".jpg", ".jpeg" ) -inotcontains $file.Extension )#расширения без фона пропускаем
-{ 	
+	
 		$watermarkSuperimposelayer = "bottom"
 		
-  }
-		else
-		{
-		$watermarkSuperimposelayer = "top"
-	}
+
+		 #pdf со слоеми не прозрачный, походу из за огранечений как не векторный. 
+		#$watermarkSuperimposelayer = "top"
+	
 	  #  professional version -  superimposeresolution=vector
     Out-File "$settings" -Append -Encoding "unicode" -InputObject @"
   superimpose=$waterMPDF
@@ -569,7 +606,7 @@ if ((".jpg", ".jpeg" ) -inotcontains $file.Extension )#расширения бе
   superimposelayer=$watermarkSuperimposelayer
 "@
 	  }
-
+  }
 
 
 
@@ -619,8 +656,18 @@ if ((".jpg", ".jpeg" ) -inotcontains $file.Extension )#расширения бе
   {
     $fileToPrint = $($outFileCut)
   }
+
+  trap 
+	{
+		Out-Host "Something wrong $_"
+		continue
+	}
+
   echo "Основной этап конвертации `"$($file.FullName)`" "
-	
+  if (Test-Path -Path $outFile -OlderThan	$scriptStartDate)
+  {
+	Remove-Item $outFile  -Force
+  }
 	$errP = $false
 	[System.Diagnostics.Process]$ptProc = $null
   if ($file.extension -eq ".cdr")
@@ -630,10 +677,18 @@ if ((".jpg", ".jpeg" ) -inotcontains $file.Extension )#расширения бе
   elseif ($file.extension -eq ".indd")
   {
 	  $errP = PrinInDesign $fileToPrint $PRINTERNAME
+
+      if ($errP -ne $null)
+      { 
+        Write-Debug "PrinInDesign failde : $errP "
+      }
   }
   if ($errP -ne $null)
   { 
-	 $ptProc,$errP = printto "`"$fileToPrint`"" "`"$PRINTERNAME`"" 
+     [System.Diagnostics.Process]$ptProc0,$errP0= printto "`"$fileToPrint`"" "`"$PRINTERNAME`"" 
+	
+	 $ptProc = $ptProc0	  
+	 $errP = $errP0
   }
 
   #$ptSuccess  Silently-ErrorVariable ProcessError -ErrorAction Continue 
@@ -657,13 +712,13 @@ if ((".jpg", ".jpeg" ) -inotcontains $file.Extension )#расширения бе
 
   for ([int]$iW = 0; $true;++ $iW)
   {
-    if (Test-Path ($outFile))
+    if (TestFileWritable ($outFile))#Test-Path
     {
-      if ($outFileCut -eq $null)
-      {
-        $outFileCut = ("$outFileS" + ".pdf8cut") #($outFile
-
-
+	
+	   if ($outFileCut -eq $null)
+       {
+			$outFileCut = ("$outFileS" + ".pdf8cut") #($outFile
+ 		
         $cutRes = Cut_PdfTo8 $outFile $outFileCut
         if (($cutRes -lt 0) -and (Test-Path $outFileCut))
         {
@@ -680,7 +735,7 @@ if ((".jpg", ".jpeg" ) -inotcontains $file.Extension )#расширения бе
 
         }
         $outFileCut = $null
-      }
+      }	 #outFileCut
 
       if ($iW -gt 0)
       {
@@ -688,7 +743,7 @@ if ((".jpg", ".jpeg" ) -inotcontains $file.Extension )#расширения бе
       }
       break;
     }
-    elseif ($ptProc -ne$null)
+    elseif ($ptProc -ne $null)
 	{  
 	  if ($ptProc.HasExited -and $ptProc.ExitCode -eq 1)
     {
@@ -709,9 +764,9 @@ if ((".jpg", ".jpeg" ) -inotcontains $file.Extension )#расширения бе
       break;
 
     }
-		if ($ptProc.HasExited -eq $null)
+		if ($ptProc.HasExited -eq $null -and ($iW -lt 10 -or (($iW % 10) -eq 0)))
 		{
-			Write-Debug "($ptProc).HasExited -eq null"
+			Write-Debug "($ptProc).HasExited -eq null N $iW"
 		}
     }# ptProc
 
@@ -763,7 +818,7 @@ if ((".jpg", ".jpeg" ) -inotcontains $file.Extension )#расширения бе
     }
 
   } # for 
-
+    Write-Host  "После  файла `"$($file.FullName)`" "
   if ($outFileCut -ne $null)
   {
     Remove-Item $outFileCut -Force;
@@ -866,7 +921,12 @@ function ExtractSpecified
     Out-File $TMPfiltFile -Force -Encoding "utf8" -InputObject (($wildCardFArray | % { "*" + $_ }) -join "`n")
 
     # Write-Debug  - set 	$DebugPreference = "Continue" 
-    & $u7z "e" $value.name "-o$TMPfullP" "-i@$TMPfiltFile" "-y" | Write-Debug
+	 trap
+	  {
+		Write-Debug	 " u7z 1 trapped:$_ "
+		continue
+	  }
+    & $u7z "e" $value.name "-o$TMPfullP" "-i@$TMPfiltFile" "-y"
     Remove-Item $TMPfiltFile -Force
     cd $oldWD
   }
@@ -875,7 +935,12 @@ function ExtractSpecified
     $oldWD = Get-Location
     cd $value.Directory
     $wd = $wildCardFArray[0]
-    & $u7z "e" $value.name "-o$TMPfullP" "-i!$wd" "-y" | Write-Debug
+	  trap
+	  {
+		Write-Debug	 " u7z 2 trapped:$_ "
+		continue
+	  }
+    & $u7z "e" $value.name "-o$TMPfullP" "-i!$wd" "-y" 
     cd $oldWD
   }
 
@@ -1145,7 +1210,7 @@ if ($initiallyDefaultPrinter -ne $null)
 {
 	$initiallyDefaultPrinter.SetDefaultPrinter()	
 }
-echo "Обработка $targetP завершена. Скрипт завершён."
+echo "Обработка `"$targetP`" завершена. Скрипт завершён."
 #Foreach-Object {
 #    $content = Get-Content $_.FullName
 
