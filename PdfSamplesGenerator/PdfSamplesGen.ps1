@@ -14,8 +14,7 @@
 #$gh1.pdftk()
 ##$gh1 = New-Object  PdfWriter.PdfInternal.Ghostscript
 #$ErrorActionPreference =  "Inquire" #
-
-#TODO
+# $DebugPreference = "Continue" 
 Set-StrictMode -Version 2.0
 $scriptStartDate = Get-Date
 
@@ -447,7 +446,7 @@ function Print1 ($file,[string]$obrazcyParentDir)
   {
     $checkExistance = $true
   }
-  #TODO
+
   #echo "obrazcyParentDir = $obrazcyParentDir"
   $samplesTargetDirName = "Образцы"
   $sampleSuffix = "_образец"
@@ -480,9 +479,12 @@ function Print1 ($file,[string]$obrazcyParentDir)
   }
 
   # Out-File "$settings" -Append -Encoding "unicode" -InputObject 	"$watermarkText"
+
+  #$outFileItem = Get-Item $outFile	-ErrorAction SilentlyContinue
+  #if ($outFileItem -ne $null -and ( (New-TimeSpan -start $outFileItem.LastWriteTime -End $scriptStartDate) -gt 0)) # 4 version Test-Path -Path $outFile -OlderThan $scriptStartDate)
   if (Test-Path $outFile)
   {
-    Remove-Item -Force $outFile
+    Remove-Item $outFile -Force
   }
 
   $outFileCut = $null
@@ -672,10 +674,7 @@ function Print1 ($file,[string]$obrazcyParentDir)
   #}
 
   echo "Основной этап конвертации `"$($file.FullName)`" "
-  if (Test-Path -Path $outFile -OlderThan $scriptStartDate)
-  {
-    Remove-Item $outFile -Force
-  }
+
   $errP = $false
   [System.Diagnostics.Process]$ptProc = $null
   if ($file.Extension -eq ".cdr")
@@ -892,7 +891,6 @@ if ($args.Count -gt 0 -and $args[0].length -ge 0)
 else
 {
   #$MyInvocation.
-  #TODO
   $par2 = Split-Path -Parent $MyInvocation.MyCommand.Path
   $targetP = $par2
   if ($targetP -eq $null)
@@ -900,7 +898,6 @@ else
     $targetP = (Get-Item $PSCommandPath).Directory
 
   }
-
   echo "Скрипт запущен для $targetP"
   while ($targetP -eq $null -or !(Test-Path $targetP))
   {
