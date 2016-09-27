@@ -29,7 +29,7 @@ function EchoA
 
 #trap
 #{
-#	"Hey Error: $_"
+#	"Hey trap Error: $_"
 #	continue	
 #}
 $logFile = $null
@@ -151,7 +151,7 @@ function printto
   }
   catch
   {
-    Write-Debug " process.Start  trapped:$_ "
+    Write-Debug " process.Start  catched:$_ "
     $errP = $_
   }
   #$standardOut = $process.StandardOutput.ReadToEnd()
@@ -665,11 +665,11 @@ function Print1 ($file,[string]$obrazcyParentDir)
     $fileToPrint = $($outFileCut)
   }
 
-  trap
-  {
-    Out-Host "Something wrong $_"
-    continue
-  }
+  #trap
+  #{
+  #  Out-Host "Something wrong $_"
+  #  continue
+  #}
 
   echo "Основной этап конвертации `"$($file.FullName)`" "
   if (Test-Path -Path $outFile -OlderThan $scriptStartDate)
@@ -819,7 +819,7 @@ function Print1 ($file,[string]$obrazcyParentDir)
       $StopPressed = Wait-KeyPress2 $keysToSkip
       if ($StopPressed)
       { #$ptProc.
-        Write-Host "Конвертация файла `"$($file.FullName)`" пропущена"
+        Write-Warning  "Конвертация файла `"$($file.FullName)`" пропущена по запросу пользователя"
         Remove-Item $outFile -Force -ErrorAction SilentlyContinue;
         break;
       }
