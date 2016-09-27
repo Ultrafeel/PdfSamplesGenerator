@@ -83,7 +83,15 @@ function Wait-KeyPress2 ($keysToSkip)
 
 }
 
-
+ function release-comobject($ref)
+ {
+	 if ($ref -eq $null)
+	 {
+		return	 
+	 }
+  while ([System.Runtime.InteropServices.Marshal]::ReleaseComObject($ref) -gt 0) { }
+  # [System.GC]::Collect()
+}
 function printto
 {
   param([string]$file,[string]$printer)
@@ -1211,6 +1219,8 @@ if ($initiallyDefaultPrinter -ne $null)
 	$initiallyDefaultPrinter.SetDefaultPrinter()	
 }
 echo "Обработка `"$targetP`" завершена. Скрипт завершён."
+release-comobject $cdraw
+release-comobject $InDesign
 #Foreach-Object {
 #    $content = Get-Content $_.FullName
 
