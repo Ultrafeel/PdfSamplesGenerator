@@ -43,22 +43,22 @@ function Wait-KeyPress2 ($keysToSkip)
   if ($Host.UI.RawUI.KeyAvailable)
   {
     $key1 = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-    if (@($keysToSkip| % {[char]$_}) -inotcontains $key1.Character) # -icontains $key1.Character
+    if (@( $keysToSkip | % { [char]$_ }) -inotcontains $key1.Character) # -icontains $key1.Character
     {
-		if ($key1.Character -ne 0)
+      if ($key1.Character -ne 0)
       {
-		  $Host.UI.RawUI.FlushInputBuffer()
-	  }
+        $Host.UI.RawUI.FlushInputBuffer()
+      }
       $doSleep = $true;
     }
-	  else
-	  {
-		  Write-Debug "KeyPressed to stop" 
-	  }
-	  
-		Write-Debug "KeyPressed withresult doSleep $doSleep :"
-		Write-Debug $key1
-	
+    else
+    {
+      Write-Debug "KeyPressed to stop"
+    }
+
+    Write-Debug "KeyPressed withresult doSleep $doSleep :"
+    Write-Debug $key1
+
   }
   else
   { $doSleep = $true; }
@@ -83,13 +83,13 @@ function Wait-KeyPress2 ($keysToSkip)
 
 }
 
- function release-comobject($ref)
- {
-	 if ($ref -eq $null)
-	 {
-		return	 
-	 }
-  while ([System.Runtime.InteropServices.Marshal]::ReleaseComObject($ref) -gt 0) { }
+function release-comobject ($ref)
+{
+  if ($ref -eq $null)
+  {
+    return
+  }
+  while ([System.Runtime.InteropServices.Marshal]::ReleaseComObject($ref) -gt 0) {}
   # [System.GC]::Collect()
 }
 function printto
@@ -118,9 +118,9 @@ function printto
   }
   else
   {
-   # echo "Convert $file error "
-   # return $null
-    $startInfo.Verb =  "print" 
+    # echo "Convert $file error "
+    # return $null
+    $startInfo.Verb = "print"
     $startInfo.Arguments = $null
     #if ($procForFile.Verbs -notcontains "print")
     #{ return  "type notcontains 'print'"		   }
@@ -133,27 +133,27 @@ function printto
   $process.StartInfo = $startInfo
 
   $errP = $null
-	
-	#Return Values:
-	#true if a process resource is started; false if no new process resource is started (for example, if an existing process is reused).
+
+  #Return Values:
+  #true if a process resource is started; false if no new process resource is started (for example, if an existing process is reused).
 
 
 
-	$newStarted =  $null
- try
+  $newStarted = $null
+  try
   {
-	$newStarted = $process.Start() 
+    $newStarted = $process.Start()
 
-	  if (!$?)
-	  {
-		$errP = $Error[0]
-	  }
-	} 
-	catch
-	{
-		Write-Debug	 " process.Start  trapped:$_ "
-		$errP = $_
-	}
+    if (!$?)
+    {
+      $errP = $Error[0]
+    }
+  }
+  catch
+  {
+    Write-Debug " process.Start  trapped:$_ "
+    $errP = $_
+  }
   #$standardOut = $process.StandardOutput.ReadToEnd()
   #$process.WaitForExit()
 
@@ -174,9 +174,9 @@ function printto
 
 function print_to_usingDefault
 {
-	param([string]$file,[string]$printer)
-	$null = (Get-WmiObject -ComputerName . -Class Win32_Printer -Filter "Name='$printer'").SetDefaultPrinter()
-	printto $file
+  param([string]$file,[string]$printer)
+  $null = (Get-WmiObject -ComputerName . -Class Win32_Printer -Filter "Name='$printer'").SetDefaultPrinter()
+  printto $file
 }
 
 #$printto = "d:\INSTALL\!office\Bullzip\files\printto.exe"
@@ -212,11 +212,11 @@ function Cut_PdfTo8 ($inFile,$outFileCut)
   {
 
     # Write-Debug  $DebugPreference = "Continue" 
-     $outTK =  & $pdftk "$inFile" cat 1-8 output $outFileCut verbose dont_ask 
+    $outTK = & $pdftk "$inFile" cat 1-8 output $outFileCut verbose dont_ask
     if ($?)
     { return (8 - $numOfPagesN) }
-	  else
-	  { Write-Warning $outTK }
+    else
+    { Write-Warning $outTK }
   }
   elseif ($numOfPagesN -ge 1)
   {
@@ -284,33 +284,33 @@ function PrintByRegCommand ([string]$file,[string]$printer)
     $reg1 = Get-Item -Path Registry::HKEY_CLASSES_ROOT\$ftype1\shell\printto\Command
     if ($reg1 -ne $null)
     { $printt2 = $reg1.Getvalue("").replace("`"%1`"",$file).replace("`"%2`"",$printer).replace("%3","").replace("%4","")
-		$errF = $null
+      $errF = $null
       #	 Start-Process  $printt2	-ErrorVariable $errF
-     #-ErrorVariable $err1
-	 $pOutp = Invoke-Expression "& $printt2" 
-		#cmd /c $printt2
-		if ($?)
-		{ 
-			$err1 = $null
-		}
-		else
-		{
-			$err1 = $Error[0]
-			if ($err1 -eq $null)
-			{
-				$err1 = $pOutp
-			}
+      #-ErrorVariable $err1
+      $pOutp = Invoke-Expression "& $printt2"
+      #cmd /c $printt2
+      if ($?)
+      {
+        $err1 = $null
+      }
+      else
+      {
+        $err1 = $Error[0]
+        if ($err1 -eq $null)
+        {
+          $err1 = $pOutp
+        }
 
-		}
-		Write-Debug "Print $file as $ftype1 $($err1 -eq $null)"
-	  #$ptERRORLEVEL = $null
-   #   $ptERRORLEVEL = $lastexitcode
-   #   if ($ptERRORLEVEL -ne 0)
-   #   { $err1 = $ptERRORLEVEL }
-   #   else
-   #   {
-   #     $err1 = $null
-   #   }
+      }
+      Write-Debug "Print $file as $ftype1 $($err1 -eq $null)"
+      #$ptERRORLEVEL = $null
+      #   $ptERRORLEVEL = $lastexitcode
+      #   if ($ptERRORLEVEL -ne 0)
+      #   { $err1 = $ptERRORLEVEL }
+      #   else
+      #   {
+      #     $err1 = $null
+      #   }
     }
   }
   return $err1;
@@ -318,86 +318,86 @@ function PrintByRegCommand ([string]$file,[string]$printer)
 
 $cdraw = $null
 
-function PrintCorelDraw([string]$fileToPrint, [string]$printer)
+function PrintCorelDraw ([string]$fileToPrint,[string]$printer)
 {
-	if ($cdraw -eq $null)
-	{
-		$cdraw = New-Object -Com  CorelDRAW.Application
-		$cdraw.Visible = $false
-	}
+  if ($cdraw -eq $null)
+  {
+    $cdraw = New-Object -Com CorelDRAW.Application
+    $cdraw.Visible = $false
+  }
 
-	$cdDocToPrint =  $cdraw.OpenDocument($fileToPrint)  #$cdraw.OpenDocument($file.FullName) AsCopy AsCopy
-	#$cdDocToPrint.SetDocVisible($false)
-	
-	$prs  = $cdDocToPrint.PrintSettings
-	#$prs|gm
-	$prs.Copies = 3
-	$prs.PrintRange = 3 # 3 == PrnPrintRange VGCore.prnPageRange
-	$prs.PageRange = "1-8"
-	#$prs.Options.PrintJobInfo = $True
+  $cdDocToPrint = $cdraw.OpenDocument($fileToPrint) #$cdraw.OpenDocument($file.FullName) AsCopy AsCopy
+  #$cdDocToPrint.SetDocVisible($false)
 
-	if ($prs.Printer.Name -ne $printer)
-	{
-		for ($iPr = 0 ; $iPr -lt $cdraw.Printers.Count; $iPr++)
-		{		
-			$pr2 = $null
-			$pr2 = $cdraw.Printers($iPr)
-			if ($pr2 -ne $null -and ($pr2.Name -eq $printer))
-			{
-				$prs.Printer = $pr2
-				break;
-			}
+  $prs = $cdDocToPrint.PrintSettings
+  #$prs|gm
+  $prs.Copies = 3
+  $prs.PrintRange = 3 # 3 == PrnPrintRange VGCore.prnPageRange
+  $prs.PageRange = "1-8"
+  #$prs.Options.PrintJobInfo = $True
 
-		}
-	}
+  if ($prs.Printer.Name -ne $printer)
+  {
+    for ($iPr = 0; $iPr -lt $cdraw.Printers.Count; $iPr++)
+    {
+      $pr2 = $null
+      $pr2 = $cdraw.Printers($iPr)
+      if ($pr2 -ne $null -and ($pr2.Name -eq $printer))
+      {
+        $prs.Printer = $pr2
+        break;
+      }
 
-	if ($prs.Printer -eq $null)
-		{return $true}
-	if ($prs.Printer.Name -ne $printer)
-	{
-		return $true	
-	}
+    }
+  }
 
-	if (!$prs.Printer.Ready())
-	{
-		return $true	
-	}
+  if ($prs.Printer -eq $null)
+  { return $true }
+  if ($prs.Printer.Name -ne $printer)
+  {
+    return $true
+  }
+
+  if (!$prs.Printer.Ready())
+  {
+    return $true
+  }
 
 
-	#With .PostScript
-	#.DownloadType1 = True
-	#.Level = prnPSLevel3
-	$cdDocToPrint.PrintOut()
-	$cdDocToPrint.Close()
+  #With .PostScript
+  #.DownloadType1 = True
+  #.Level = prnPSLevel3
+  $cdDocToPrint.PrintOut()
+  $cdDocToPrint.Close()
 
 }
-function TestFileWritable($file1)
+function TestFileWritable ($file1)
 {
-	if (!(Test-Path $file1)	)
-	{
-		return $false
-	}
+  if (!(Test-Path $file1))
+  {
+    return $false
+  }
 
-		try {
-			 [IO.File]::OpenWrite($file1).close();
-			$true
-		}
-		catch { 
-			$false}	
+  try {
+    [IO.File]::OpenWrite($file1).Close();
+    $true
+  }
+  catch {
+    $false }
 }
 $InDesign = $null
-function PrinInDesign([string]$fileToPrint, [string]$printer)
+function PrinInDesign ([string]$fileToPrint,[string]$printer)
 {
-	if ($InDesign -eq $null)
-	{
-	    $InDesign = New-Object -Com  InDesign.Application
+  if ($InDesign -eq $null)
+  {
+    $InDesign = New-Object -Com InDesign.Application
 
-	}
-	if ($InDesign -eq $null)
-	{ 
-		return $false
-	}
-	<#$Awindows =  $InDesign.ActiveWindow 
+  }
+  if ($InDesign -eq $null)
+  {
+    return $false
+  }
+  <#$Awindows =  $InDesign.ActiveWindow 
 	#$Awindows.Minimize()
 	$windows1 =  $InDesign.Windows
 	$window1 = $windows1.FirstItem()
@@ -405,32 +405,32 @@ function PrinInDesign([string]$fileToPrint, [string]$printer)
 	{
 		$window1.Minimize()
 	}#>
-	   #idDefault = 0x44666c74,
-        #idOpenOriginal = 0x4f704f72,
-        #idOpenCopy = 0x4f704370
-	$indd_doc =  $InDesign.Open($fileToPrint, $false, 0x4f704370)  
-#$indd_doc.SetDocVisible($false)"InDesign.idOpenOptions.idOpenCopy"
+  #idDefault = 0x44666c74,
+  #idOpenOriginal = 0x4f704f72,
+  #idOpenCopy = 0x4f704370
+  $indd_doc = $InDesign.Open($fileToPrint,$false,0x4f704370)
+  #$indd_doc.SetDocVisible($false)"InDesign.idOpenOptions.idOpenCopy"
   #$PRINTERNAMe = "Bullzip PDF Printer"
-#  $printPresetName = $printer.Replace(" ","_") + "8";
-#  $printPreset = $InDesign.PrinterPresets.Item($printPresetName)
-#  if ($printPreset -eq $null)
-#  {
-#	  $printPreset = $InDesign.PrinterPresets.Add($printPresetName)
-#$printPreset.Printer = $printer
-#$printPreset.Sequence = "1-8"
-#	  }
+  #  $printPresetName = $printer.Replace(" ","_") + "8";
+  #  $printPreset = $InDesign.PrinterPresets.Item($printPresetName)
+  #  if ($printPreset -eq $null)
+  #  {
+  #	  $printPreset = $InDesign.PrinterPresets.Add($printPresetName)
+  #$printPreset.Printer = $printer
+  #$printPreset.Sequence = "1-8"
+  #	  }
 
-$printPref = $indd_doc.PrintPreferences
-#$printPref.PageRange = [System.Runtime.InteropServices.BStrWrapper]"1-9"
-$printPref.printer = $printer
-$indd_doc.PrintOut($false)
-#Return value: A list of task states for task that finished. Type: Array of idTaskState enumerators
-$taskStates  = $InDesign.WaitForAllTasks() 
-	#Constant idAsk = 1634954016 (&H61736b20)
-#Constant idNo = 1852776480 (&H6e6f2020)
-#    Default member of InDesign.idSaveOptions
-#    Does not save changes.
-$indd_doc.Close(1852776480)
+  $printPref = $indd_doc.PrintPreferences
+  #$printPref.PageRange = [System.Runtime.InteropServices.BStrWrapper]"1-9"
+  $printPref.Printer = $printer
+  $indd_doc.PrintOut($false)
+  #Return value: A list of task states for task that finished. Type: Array of idTaskState enumerators
+  $taskStates = $InDesign.WaitForAllTasks()
+  #Constant idAsk = 1634954016 (&H61736b20)
+  #Constant idNo = 1852776480 (&H6e6f2020)
+  #    Default member of InDesign.idSaveOptions
+  #    Does not save changes.
+  $indd_doc.Close(1852776480)
 
 
 }
@@ -594,31 +594,31 @@ function Print1 ($file,[string]$obrazcyParentDir)
 "@
 
 
- 
-if ((".jpg", ".jpeg" ) -inotcontains $file.Extension )#расширения без фона пропускаем
-{
-	 	if (Test-Path $waterMPDF)
-    {
-		$watermarkSuperimposelayer = ""
-	
-		$watermarkSuperimposelayer = "bottom"
-		
 
-		 #pdf со слоеми не прозрачный, походу из за огранечений как не векторный. 
-		#$watermarkSuperimposelayer = "top"
-	
-	  #  professional version -  superimposeresolution=vector
-    Out-File "$settings" -Append -Encoding "unicode" -InputObject @"
+  if ((".jpg",".jpeg") -inotcontains $file.Extension) #расширения без фона пропускаем
+  {
+    if (Test-Path $waterMPDF)
+    {
+      $watermarkSuperimposelayer = ""
+
+      $watermarkSuperimposelayer = "bottom"
+
+
+      #pdf со слоеми не прозрачный, походу из за огранечений как не векторный. 
+      #$watermarkSuperimposelayer = "top"
+
+      #  professional version -  superimposeresolution=vector
+      Out-File "$settings" -Append -Encoding "unicode" -InputObject @"
   superimpose=$waterMPDF
   superimposeresolution=
   superimposelayer=$watermarkSuperimposelayer
 "@
-	  }
+    }
   }
 
 
 
-	<#
+  <#
 	
 	-dPDFSETTINGS=/screen   (screen-view-only quality, 72 dpi images)
 -dPDFSETTINGS=/ebook    (low quality, 150 dpi images)
@@ -665,47 +665,47 @@ if ((".jpg", ".jpeg" ) -inotcontains $file.Extension )#расширения бе
     $fileToPrint = $($outFileCut)
   }
 
-  trap 
-	{
-		Out-Host "Something wrong $_"
-		continue
-	}
+  trap
+  {
+    Out-Host "Something wrong $_"
+    continue
+  }
 
   echo "Основной этап конвертации `"$($file.FullName)`" "
-  if (Test-Path -Path $outFile -OlderThan	$scriptStartDate)
+  if (Test-Path -Path $outFile -OlderThan $scriptStartDate)
   {
-	Remove-Item $outFile  -Force
+    Remove-Item $outFile -Force
   }
-	$errP = $false
-	[System.Diagnostics.Process]$ptProc = $null
-  if ($file.extension -eq ".cdr")
+  $errP = $false
+  [System.Diagnostics.Process]$ptProc = $null
+  if ($file.Extension -eq ".cdr")
   {
-	 $errP = PrintCorelDraw $fileToPrint $PRINTERNAME
+    $errP = PrintCorelDraw $fileToPrint $PRINTERNAME
   }
-  elseif ($file.extension -eq ".indd")
+  elseif ($file.Extension -eq ".indd")
   {
-	  $errP = PrinInDesign $fileToPrint $PRINTERNAME
+    $errP = PrinInDesign $fileToPrint $PRINTERNAME
 
-      if ($errP -ne $null)
-      { 
-        Write-Debug "PrinInDesign failde : $errP "
-      }
+    if ($errP -ne $null)
+    {
+      Write-Debug "PrinInDesign failde : $errP "
+    }
   }
   if ($errP -ne $null)
-  { 
-     [System.Diagnostics.Process]$ptProc0,$errP0= printto "`"$fileToPrint`"" "`"$PRINTERNAME`"" 
-	
-	 $ptProc = $ptProc0	  
-	 $errP = $errP0
+  {
+    [System.Diagnostics.Process]$ptProc0,$errP0 = printto "`"$fileToPrint`"" "`"$PRINTERNAME`""
+
+    $ptProc = $ptProc0
+    $errP = $errP0
   }
 
   #$ptSuccess  Silently-ErrorVariable ProcessError -ErrorAction Continue 
   #$ptProcErrOut = $ptProc.StandardError.ReadToEnd()
-	$endStat = $null
-	if ($ptProc -ne $null)
-   {
-	$endStat = $ptProc.HasExited
-   }
+  $endStat = $null
+  if ($ptProc -ne $null)
+  {
+    $endStat = $ptProc.HasExited
+  }
   #if ($ptErr -ne $null) {
 
   #  $errPrint = ("`"$($file.FullName)`"" + " не имеет печатающей программы :" + $ptErr.ToString())
@@ -720,13 +720,13 @@ if ((".jpg", ".jpeg" ) -inotcontains $file.Extension )#расширения бе
 
   for ([int]$iW = 0; $true;++ $iW)
   {
-    if (TestFileWritable ($outFile))#Test-Path
+    if (TestFileWritable ($outFile)) #Test-Path
     {
-	
-	   if ($outFileCut -eq $null)
-       {
-			$outFileCut = ("$outFileS" + ".pdf8cut") #($outFile
- 		
+
+      if ($outFileCut -eq $null)
+      {
+        $outFileCut = ("$outFileS" + ".pdf8cut") #($outFile
+
         $cutRes = Cut_PdfTo8 $outFile $outFileCut
         if (($cutRes -lt 0) -and (Test-Path $outFileCut))
         {
@@ -743,7 +743,7 @@ if ((".jpg", ".jpeg" ) -inotcontains $file.Extension )#расширения бе
 
         }
         $outFileCut = $null
-      }	 #outFileCut
+      } #outFileCut
 
       if ($iW -gt 0)
       {
@@ -752,33 +752,33 @@ if ((".jpg", ".jpeg" ) -inotcontains $file.Extension )#расширения бе
       break;
     }
     elseif ($ptProc -ne $null)
-	{  
-	  if ($ptProc.HasExited -and $ptProc.ExitCode -eq 1)
     {
-      #1 -, но печатает, такое поведение не очень понятно почему, например у AcrobReader
-	   #- возможно. для прог, которые остаются открытыми.
-      #continue
-    }
-    elseif ($ptProc.HasExited -and $ptProc.ExitCode -eq 8985 -and $file.Extension -eq ".rtf")
-    {
-      #непонятно
-      #continue
-    } 
-	elseif ($ptProc.HasExited -and $ptProc.ExitCode -ge 2 -and ($iW -gt (100000 /$waitPeriodMs )))
-    {
-      $errPrint = ("`"$($file.FullName)`"" + " не конвертируется. Errcode = " + $ptProc.ExitCode)
-      Write-Warning $errPrint
-      "[$(get-date)] $errPrint" >> $logFile
-      break;
+      if ($ptProc.HasExited -and $ptProc.ExitCode -eq 1)
+      {
+        #1 -, но печатает, такое поведение не очень понятно почему, например у AcrobReader
+        #- возможно. для прог, которые остаются открытыми.
+        #continue
+      }
+      elseif ($ptProc.HasExited -and $ptProc.ExitCode -eq 8985 -and $file.Extension -eq ".rtf")
+      {
+        #непонятно
+        #continue
+      }
+      elseif ($ptProc.HasExited -and $ptProc.ExitCode -ge 2 -and ($iW -gt (100000 / $waitPeriodMs)))
+      {
+        $errPrint = ("`"$($file.FullName)`"" + " не конвертируется. Errcode = " + $ptProc.ExitCode)
+        Write-Warning $errPrint
+        "[$(get-date)] $errPrint" >> $logFile
+        break;
 
-    }
-		if ($ptProc.HasExited -eq $null -and ($iW -lt 10 -or (($iW % 10) -eq 0)))
-		{
-			Write-Debug "($ptProc).HasExited -eq null N $iW"
-		}
-    }# ptProc
+      }
+      if ($ptProc.HasExited -eq $null -and ($iW -lt 10 -or (($iW % 10) -eq 0)))
+      {
+        Write-Debug "($ptProc).HasExited -eq null N $iW"
+      }
+    } # ptProc
 
-		if ($errP -ne $null)
+    if ($errP -ne $null)
     {
 
       $errP2 = $null;
@@ -787,10 +787,10 @@ if ((".jpg", ".jpeg" ) -inotcontains $file.Extension )#расширения бе
 
         $errP2 = PrintByRegCommand "`"$($file.FullName)`"" "`"$PRINTERNAME`""
         if ($errP2 -eq $null)
-        { 
-			$errP = $null
-			continue 
-		}
+        {
+          $errP = $null
+          continue
+        }
       }
 
 
@@ -806,7 +806,7 @@ if ((".jpg", ".jpeg" ) -inotcontains $file.Extension )#расширения бе
       $keysToSkip = 's'
       if ($iW -eq 0)
       {
-        Start-Sleep -Milliseconds $(10*$waitPeriodMs)
+        Start-Sleep -Milliseconds $(10 * $waitPeriodMs)
         continue;
       }
       elseif ($iW -eq 1)
@@ -816,17 +816,17 @@ if ((".jpg", ".jpeg" ) -inotcontains $file.Extension )#расширения бе
         continue
 
       }
-	  $StopPressed=	Wait-KeyPress2 $keysToSkip
+      $StopPressed = Wait-KeyPress2 $keysToSkip
       if ($StopPressed)
-      {#$ptProc.
+      { #$ptProc.
         Write-Host "Конвертация файла `"$($file.FullName)`" пропущена"
-		    Remove-Item $outFile -Force -ErrorAction SilentlyContinue;
-			 break;
+        Remove-Item $outFile -Force -ErrorAction SilentlyContinue;
+        break;
       }
     }
 
   } # for 
-    Write-Host  "После  файла `"$($file.FullName)`" "
+  Write-Host "После  файла `"$($file.FullName)`" "
   if ($outFileCut -ne $null)
   {
     Remove-Item $outFileCut -Force;
@@ -880,7 +880,7 @@ function AlgA_Iter
     Print1 $value $obrazcyParentDir
   }
 
-  Write-Debug  $value.FullName
+  Write-Debug $value.FullName
 }
 
 #not in PS2 !! echo $MyInvocation.PSCommandPath
@@ -929,12 +929,12 @@ function ExtractSpecified
     Out-File $TMPfiltFile -Force -Encoding "utf8" -InputObject (($wildCardFArray | % { "*" + $_ }) -join "`n")
 
     # Write-Debug  - set 	$DebugPreference = "Continue" 
-	 trap
-	  {
-		Write-Debug	 " u7z 1 trapped:$_ "
-		continue
-	  }
-    & $u7z "e" $value.name "-o$TMPfullP" "-i@$TMPfiltFile" "-y"
+    trap
+    {
+      Write-Debug " u7z 1 trapped:$_ "
+      continue
+    }
+    & $u7z "e" $value.Name "-o$TMPfullP" "-i@$TMPfiltFile" "-y"
     Remove-Item $TMPfiltFile -Force
     cd $oldWD
   }
@@ -943,12 +943,12 @@ function ExtractSpecified
     $oldWD = Get-Location
     cd $value.Directory
     $wd = $wildCardFArray[0]
-	  trap
-	  {
-		Write-Debug	 " u7z 2 trapped:$_ "
-		continue
-	  }
-    & $u7z "e" $value.name "-o$TMPfullP" "-i!$wd" "-y" 
+    trap
+    {
+      Write-Debug " u7z 2 trapped:$_ "
+      continue
+    }
+    & $u7z "e" $value.Name "-o$TMPfullP" "-i!$wd" "-y"
     cd $oldWD
   }
 
@@ -1103,15 +1103,15 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
           elseif ($afile.depth -lt $depth)
           { break; }
         }
-		$aTrgetFPath =  @($aFfiles[$deepest_firstIndex].pathAr )
-		  if ($aTrgetFPath.Count -lt $depth)
-		  {
-			  Write-Debug  "pathAr strange"
-			  $aFfiles[$deepest_firstIndex].pathAr =  $aFfiles[$deepest_firstIndex].Path.Split('\')
-			 $aTrgetFPath = $aFfiles[$deepest_firstIndex].pathAr
+        $aTrgetFPath = @( $aFfiles[$deepest_firstIndex].pathAr)
+        if ($aTrgetFPath.Count -lt $depth)
+        {
+          Write-Debug "pathAr strange"
+          $aFfiles[$deepest_firstIndex].pathAr = $aFfiles[$deepest_firstIndex].Path.Split('\')
+          $aTrgetFPath = $aFfiles[$deepest_firstIndex].pathAr
 
-		}
-        $arTargdirSplit = ($aTrgetFPath| select -First ($aTrgetFPath.count + (-1)) )
+        }
+        $arTargdirSplit = ($aTrgetFPath | select -First ($aTrgetFPath.Count + (-1)))
         $arTargdir = $arTargdirSplit -join "\";
         $aFfilesTargFolder = ($aFfiles | Where-Object { (Compare-Object -ReferenceObject ($_.pathAr | select -First ($depth + (-1))) -DifferenceObject $arTargdirSplit -SyncWindow 0) -eq $null }) # $_.path	-like  "$arTargdir\*"
         # @($aFfiles[$deepest_firstIndex])
@@ -1124,7 +1124,7 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
           foreach ($mask in ("1_.pdf","*.pdf"))
           {
 
-            $pretendent1 = @($aFfilesTargFolder | Where-Object { $_.pathAr[$_.pathAr.Count + (-1)] -like $mask })
+            $pretendent1 = @( $aFfilesTargFolder | Where-Object { $_.pathAr[$_.pathAr.Count + (-1)] -like $mask })
 
             if ($pretendent1.Count -gt 0)
             { break; }
@@ -1136,11 +1136,11 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
               @( "telo..*.doc","telo..*.docx"),@( "*.doc","*.docx")))
           {
 
-            $pretendent1 = @($aFfilesTargFolder | Where-Object {
-              $_.pathAr[$_.pathAr.Count +(-1)] -like $mask[0] -or
-              (($mask.Count -le 1) -or
-                ($_.pathAr[$_.pathAr.Count + (- 1)] -like $mask[1]))
-            })
+            $pretendent1 = @( $aFfilesTargFolder | Where-Object {
+                $_.pathAr[$_.pathAr.Count + (-1)] -like $mask[0] -or
+                (($mask.Count -le 1) -or
+                  ($_.pathAr[$_.pathAr.Count + (- 1)] -like $mask[1]))
+              })
 
             if ($pretendent1.Count -gt 0)
             { break; }
@@ -1203,7 +1203,7 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
 #$IMag.Convert( "$targetP\$pd1[0-7]" , "-delete 8--1")
 
 # $Printers = Get-WmiObject -Class Win32_Printer $Printers|where { $_.Default }
-$initiallyDefaultPrinter =  Get-WmiObject -ComputerName . -Class Win32_Printer -Filter "Default=True"
+$initiallyDefaultPrinter = Get-WmiObject -ComputerName . -Class Win32_Printer -Filter "Default=True"
 
 Algs $targetP $false $null
 
@@ -1216,7 +1216,7 @@ $null = (Get-WmiObject -ComputerName . -Class Win32_Printer -Filter "Name='$defp
 #>
 if ($initiallyDefaultPrinter -ne $null)
 {
-	$initiallyDefaultPrinter.SetDefaultPrinter()	
+  $initiallyDefaultPrinter.SetDefaultPrinter()
 }
 echo "Обработка `"$targetP`" завершена. Скрипт завершён."
 release-comobject $cdraw
