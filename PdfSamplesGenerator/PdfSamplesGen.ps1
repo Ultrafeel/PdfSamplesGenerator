@@ -757,12 +757,12 @@ if ((".jpg", ".jpeg" ) -inotcontains $file.Extension )#расширения бе
     {
       #1 -, но печатает, такое поведение не очень понятно почему, например у AcrobReader
 	   #- возможно. для прог, которые остаются открытыми.
-      continue
+      #continue
     }
     elseif ($ptProc.HasExited -and $ptProc.ExitCode -eq 8985 -and $file.Extension -eq ".rtf")
     {
       #непонятно
-      continue
+      #continue
     } 
 	elseif ($ptProc.HasExited -and $ptProc.ExitCode -ge 2 -and ($iW -gt (100000 /$waitPeriodMs )))
     {
