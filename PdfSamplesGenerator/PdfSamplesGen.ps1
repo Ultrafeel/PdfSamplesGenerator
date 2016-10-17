@@ -315,23 +315,36 @@ function PrintByRegCommand ([string]$file,[string]$printer)
   return $err1;
 }
 
-$cdraw = $null
+[System.Reflection.Assembly]::LoadWithPartialName("Corel.Interop.VGCore")
+[Corel.Interop.VGCore.Application]$cdraw = $null
+ #Imports Corel.Interop.VGCore
 
+
+ # Sub CreateTextInCorelDRAW(text As String, fontName As String, fontSize As Single)
+ [System.Type]$pia_type =$null
 function PrintCorelDraw ([string]$fileToPrint,[string]$printer)
 {
   if ($cdraw -eq $null)
   {
-    $cdraw = New-Object -Com CorelDRAW.Application
-    $cdraw.Visible = $false
-  }
 
-  $cdDocToPrint = $cdraw.OpenDocument($fileToPrint) #$cdraw.OpenDocument($file.FullName) AsCopy AsCopy
+	  $pia_type   = [System.Type]::GetTypeFromProgID("CorelDRAW.Application")
+    [Corel.Interop.VGCore.Application]$cdraw1 = [System.Activator]::CreateInstance($pia_type)
+	  if ($cdraw1 -eq $null)
+	  {
+
+		  }
+	 $cdraw  =    $cdraw1
+  #  $cdraw = New-Object -Com CorelDRAW.Application
+  #  $cdraw.Visible = $false
+  	  }
+
+  [Corel.Interop.VGCore.Document]$cdDocToPrint = $cdraw.OpenDocument($fileToPrint) #$cdraw.OpenDocument($file.FullName) AsCopy AsCopy
   #$cdDocToPrint.SetDocVisible($false)
 
-  $prs = $cdDocToPrint.PrintSettings
+   [Corel.Interop.VGCore.PrintSettings]$prs = $cdDocToPrint.PrintSettings
   #$prs|gm
  # $prs.Copies = 3
-  $prs.PrintRange = 3 # 3 == PrnPrintRange VGCore.prnPageRange
+  $prs.PrintRange = [Corel.Interop.VGCore.PrnPrintRange]::prnPageRange # 3 == PrnPrintRange VGCore.prnPageRange
   $prs.PageRange = "1-8"
   #$prs.Options.PrintJobInfo = $True
 
@@ -1182,6 +1195,9 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
     }
     else
     {
+		#TODO
+		  if ($fExt -ne "cdr")
+		{ continue }
       #if (!$algAForB)
       #{ continue; } 
       AlgA_Iter $value $obrazcyParentDir
