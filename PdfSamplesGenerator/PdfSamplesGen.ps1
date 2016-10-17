@@ -319,6 +319,10 @@ $cdraw = $null
 
 function PrintCorelDraw ([string]$fileToPrint,[string]$printer)
 {
+	trap
+	{
+		return $true	
+	}
   if ($cdraw -eq $null)
   {
     $cdraw = New-Object -Com CorelDRAW.Application
@@ -794,6 +798,8 @@ function Print1 ($file,[string]$obrazcyParentDir)
     {
 
       $errP2 = $null;
+		try
+		{
       if ($errP.Exception.InnerException.NativeErrorCode -eq 1155)
       {
 
@@ -804,7 +810,11 @@ function Print1 ($file,[string]$obrazcyParentDir)
           continue
         }
       }
-
+	  }
+	  catch
+	{
+		Write-Debug "non exception errP: $errP	, $_"
+	}
 
       $errPrint = ("`"$($file.FullName)`"" + " не конвертируется, возможно не имеет печатающей программы :" + $errP.ToString())
       Write-Warning $errPrint
