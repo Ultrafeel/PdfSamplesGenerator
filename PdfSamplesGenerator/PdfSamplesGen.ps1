@@ -315,15 +315,24 @@ function PrintByRegCommand ([string]$file,[string]$printer)
   return $err1;
 }
 
-$cdraw = $null
 
-function PrintCorelDraw ([string]$fileToPrint,[string]$printer)
+function PrintCorelDrawInternal ([string]$fileToPrint,[string]$printer, $cdraw)
 {
 	trap
 	{
-		return $true	
+		Write-Debug "PrintCorelDrawInternal trap: $_"
+		#TODO:
+		If ( [IntPtr]::Size * 8 -ne 64 )
+		{
+			return	"PrintCorelDrawInternal trap:32 $_ !!"
+		}
+		Else
+		{
+			 return	"64!! PrintCorelDrawInternal trap: $_"
+		}
+		#return $true	
 	}
-  if ($cdraw -eq $null)
+	if ($cdraw -eq $null)
   {
     $cdraw = New-Object -Com CorelDRAW.Application
     $cdraw.Visible = $false
@@ -373,6 +382,42 @@ function PrintCorelDraw ([string]$fileToPrint,[string]$printer)
   $cdDocToPrint.PrintOut()
   $cdDocToPrint.Close()
 
+}
+ $cdraw = $null
+
+function PrintCorelDraw ([string]$fileToPrint,[string]$printer)
+{
+	trap
+	{
+		Write-Debug "PrintCorelDraw trap: $_"
+		return $true	
+	}
+  if ($cdraw -eq $null)
+  {
+    $cdraw = New-Object -Com CorelDRAW.Application
+    $cdraw.Visible = $false
+  }
+  $err =	PrintCorelDrawInternal 	$fileToPrint  $printer	$cdraw
+	if ( $err -ne $null)
+	{
+		 If ( [IntPtr]::Size * 8 -ne 64 )
+		{
+		 #C:\Windows\SysNative\WindowsPowerShell\v1.0\PowerShell.exe -File $MyInvocation.MyCommand.Path -YourParam1 $YourParam1 -YourParam2 $YourParam2
+			
+		}
+		Else
+		{
+			$func = (get-command PrintCorelDrawInternal);
+			$jobCD = Start-Job -ScriptBlock $func.ScriptBlock -ArgumentList @($fileToPrint,$printer) -RunAs32
+			Wait-Job $jobCD	
+			$_out1 = $jobCD.ChildJobs[0].Output[0]
+			if ($jobCD.State -ne "Completed")
+			{
+				return $true
+			}
+		}
+	}
+	return $err
 }
 function TestFileWritable ($file1)
 {
