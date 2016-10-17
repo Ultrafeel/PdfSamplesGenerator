@@ -334,7 +334,7 @@ function PrintCorelDrawInternal ([string]$fileToPrint,[string]$printer, $cdraw)
 	}
 	if ($cdraw -eq $null)
   {
-    $cdraw = New-Object -Com CorelDRAW.Application.15
+    $cdraw = New-Object -Com CorelDRAW.Application
     $cdraw.Visible = $false
   }
 
@@ -424,7 +424,96 @@ function PrintCorelDraw ([string]$fileToPrint,[string]$printer)
 			{
 				return $_out1
 			}
+			else
+			{
+			
+			 $code =	@"
+				using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Corel.Interop.VGCore;
+
+namespace CorelInterop1
+{
+    public class Class1
+    {
+        static public bool Print(string fileToPrint, string printer)
+        {
+            Type pia_type = Type.GetTypeFromProgID("CorelDRAW.Application");
+            var cdraw1 = Activator.CreateInstance(pia_type);
+            Application cdraw = cdraw1 as Application;
+             Document cdDocToPrint = cdraw.OpenDocument(fileToPrint); //cdraw.OpenDocument(file.FullName) AsCopy AsCopy
+            //cdDocToPrint.SetDocVisible(false)
+
+            var prs = cdDocToPrint.PrintSettings;
+            //prs|gm
+            prs.Copies = 1;
+            prs.PrintRange = Corel.Interop.VGCore.PrnPrintRange.prnPageRange;// 3 == PrnPrintRange VGCore.prnPageRange
+            prs.PageRange = "1-8";
+            if (prs.Printer.Name != printer)
+            {
+                for (var iPr = 0; iPr < cdraw.Printers.Count; iPr++)
+                {
+                    //pr2 = null;
+                    var pr2 = cdraw.Printers[iPr];
+                    if (pr2 != null && (pr2.Name == printer))
+                    {
+                        prs.Printer = pr2;
+                        break;
+                    }
+
+                }
+            }
+
+            if (prs.Printer == null)
+            { return true; }
+            if (prs.Printer.Name != printer)
+            {
+                return true;
+            }
+
+            if (!prs.Printer.Ready)
+            {
+                return true;
+            }
+
+
+            // #With .PostScript
+            //#.DownloadType1 = True
+            //#.Level = prnPSLevel3;
+            cdDocToPrint.PrintOut();
+            ((Corel.Interop.VGCore.IVGDocument)cdDocToPrint).Close();
+            return false;
+        }
+	}
+}
+"@	
+	$vgcore = [System.Reflection.Assembly]::LoadWithPartialName("Corel.Interop.VGCore")
+
+										#"Corel.Interop.VGCore"
+				
+				try
+				{
+Add-Type -ReferencedAssemblies @($vgcore) -TypeDefinition $code -Language CSharp  | Out-Null
+			 }
+				catch
+				{
+				  	  Write-Debug " Add-Type  catched:$_ " 
+				}
+
+  $err = [CorelInterop1.Class1]::Print($fileToPrint, $printer)
+
+			if ($err -eq $false)
+			  {
+				 $err = $null
+				
+			}
+
+
 		}
+	}
 	}
 	return $err
 }
