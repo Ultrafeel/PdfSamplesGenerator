@@ -742,9 +742,15 @@ function Print1 ($file,[string]$obrazcyParentDir)
   if ($errP -ne $null)
   {
     [System.Diagnostics.Process]$ptProc0,$errP0 = printto "`"$fileToPrint`"" "`"$PRINTERNAME`""
-
-    $ptProc = $ptProc0
-    $errP = $errP0
+	if ($errP -ne $false -and $errP0 -eq $null -and $ptProc0 -ne $null -and $ptProc0.HasExited -eq $null)
+	  {
+		  Write-Debug "Failed second try"
+	  }
+	  else
+	  {
+		$ptProc = $ptProc0
+		$errP = $errP0
+	 }
   }
 
   #$ptSuccess  Silently-ErrorVariable ProcessError -ErrorAction Continue 
@@ -832,6 +838,10 @@ function Print1 ($file,[string]$obrazcyParentDir)
 
 		  }
       }
+		#if ($iW -gt (100000 / $waitPeriodMs) -and  $ptProc.HasExited -eq $null) #TODO
+		#{
+		#	$errP = "не удалось напечатать"
+		#}
     } # ptProc
       if (($iW -lt 10 -or (($iW % 10) -eq 0)))
       {
