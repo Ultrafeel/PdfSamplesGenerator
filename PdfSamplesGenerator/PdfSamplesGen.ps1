@@ -409,11 +409,20 @@ function PrintCorelDraw ([string]$fileToPrint,[string]$printer)
 		{
 			$func = (get-command PrintCorelDrawInternal);
 			$jobCD = Start-Job -ScriptBlock $func.ScriptBlock -ArgumentList @($fileToPrint,$printer) -RunAs32
-			Wait-Job $jobCD	
+			Wait-Job $jobCD	 | Out-Null	  
+			$_out1 =  $null
+			try {
 			$_out1 = $jobCD.ChildJobs[0].Output[0]
-			if ($jobCD.State -ne "Completed")
+			}
+			catch
+			{  
+				  Write-Debug " p$jobCD.ChildJobs[0].Output[0]  catched:$_ ||| $_out1" 
+				$_out1 = $_
+			}
+
+			if ($_out1 -eq $null -and $jobCD.State -eq "Completed")
 			{
-				return $true
+				return $_out1
 			}
 		}
 	}
