@@ -330,7 +330,7 @@ function PrintCorelDraw ([string]$fileToPrint,[string]$printer)
 
   $prs = $cdDocToPrint.PrintSettings
   #$prs|gm
-  $prs.Copies = 3
+ # $prs.Copies = 3
   $prs.PrintRange = 3 # 3 == PrnPrintRange VGCore.prnPageRange
   $prs.PageRange = "1-8"
   #$prs.Options.PrintJobInfo = $True
