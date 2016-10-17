@@ -14,7 +14,7 @@
 #$gh1.pdftk()
 ##$gh1 = New-Object  PdfWriter.PdfInternal.Ghostscript
 #$ErrorActionPreference =  "Inquire" #
-# $DebugPreference = "Continue" 
+ $DebugPreference = "Continue" 
 Set-StrictMode -Version 2.0
 $scriptStartDate = Get-Date
 
@@ -334,7 +334,7 @@ function PrintCorelDrawInternal ([string]$fileToPrint,[string]$printer, $cdraw)
 	}
 	if ($cdraw -eq $null)
   {
-    $cdraw = New-Object -Com CorelDRAW.Application
+    $cdraw = New-Object -Com CorelDRAW.Application.15
     $cdraw.Visible = $false
   }
 
@@ -900,6 +900,13 @@ function Print1 ($file,[string]$obrazcyParentDir)
         Write-Host "Конвертация файла `"$($file.FullName)`" затянулась. Нажмите `"S`" чтобы пропустить его"
         Start-Sleep -Milliseconds $waitPeriodMs
         continue
+
+      }
+      elseif ($iW -gt 1000)	 #TODO
+      {
+        Write-Warning  "Конвертация файла `"$($file.FullName)`" прервана, т.к. затянулась"
+        Remove-Item $outFile -Force -ErrorAction SilentlyContinue;
+        break;
 
       }
       $StopPressed = Wait-KeyPress2 $keysToSkip
