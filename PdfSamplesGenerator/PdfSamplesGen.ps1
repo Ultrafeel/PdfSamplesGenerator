@@ -771,12 +771,25 @@ function Print1 ($file,[string]$obrazcyParentDir)
         break;
 
       }
-      if ($ptProc.HasExited -eq $null -and ($iW -lt 10 -or (($iW % 10) -eq 0)))
+      if (($iW -lt 10 -or (($iW % 10) -eq 0)))
       {
+		  if (($ptProc -ne $null) -and $ptProc.HasExited -eq $null)
+		  {
         Write-Debug "($ptProc).HasExited -eq null N $iW"
+			  }
+		  else
+		  {
+		      Write-Debug "($ptProc) N $iW"
+
+		  }
       }
     } # ptProc
+      if (($iW -lt 10 -or (($iW % 10) -eq 0)))
+      {
+       Write-Host -NoNewline "."
+       # Write-Debug -no "($ptProc).HasExited -eq null N $iW"
 
+      }
     if ($errP -ne $null)
     {
 
