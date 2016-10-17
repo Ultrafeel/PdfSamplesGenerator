@@ -315,8 +315,8 @@ function PrintByRegCommand ([string]$file,[string]$printer)
   return $err1;
 }
 
-[System.Reflection.Assembly]::LoadWithPartialName("Corel.Interop.VGCore")
-[Corel.Interop.VGCore.Application]$cdraw = $null
+$vgcore = [System.Reflection.Assembly]::LoadWithPartialName("Corel.Interop.VGCore")
+ [Corel.Interop.VGCore.ApplicationClass]$cdraw = $null
  #Imports Corel.Interop.VGCore
 
 
@@ -327,24 +327,33 @@ function PrintCorelDraw ([string]$fileToPrint,[string]$printer)
   if ($cdraw -eq $null)
   {
 
-	  $pia_type   = [System.Type]::GetTypeFromProgID("CorelDRAW.Application")
-    [Corel.Interop.VGCore.Application]$cdraw1 = [System.Activator]::CreateInstance($pia_type)
-	  if ($cdraw1 -eq $null)
-	  {
+	  # $pia_type   = [System.Type]::GetTypeFromProgID("CorelDRAW.Application.17")
+    # [Corel.Interop.VGCore.ApplicationClass]$cdraw1 = $null
+    # $cdraw1 = [System.Activator]::CreateInstance($pia_type)
+	  # if ((!$?) -or $cdraw1 -eq $null)
+	  
+    $cdraw2 = New-Object Corel.Interop.VGCore.ApplicationClass
+    $cdraw1 = $cdraw2.Application 
 
-		  }
+		
 	 $cdraw  =    $cdraw1
   #  $cdraw = New-Object -Com CorelDRAW.Application
   #  $cdraw.Visible = $false
-  	  }
-
-  [Corel.Interop.VGCore.Document]$cdDocToPrint = $cdraw.OpenDocument($fileToPrint) #$cdraw.OpenDocument($file.FullName) AsCopy AsCopy
+  }
+   Add-Type -AssemblyName Corel.Interop.VGCore | Out-Null
+  $cdDocToPrint = $cdraw.OpenDocument($fileToPrint) #$cdraw.OpenDocument($file.FullName) AsCopy AsCopy
   #$cdDocToPrint.SetDocVisible($false)
-
-   [Corel.Interop.VGCore.PrintSettings]$prs = $cdDocToPrint.PrintSettings
+  [Corel.Interop.VGCore.DocumentClass]$cdDocToPrint1 = $cdDocToPrint
+ [Corel.Interop.VGCore.Document]$cdDocToPrint0 = $cdDocToPrint
+   $prs = $cdDocToPrint.PrintSettings
+   [Corel.Interop.VGCore.PrintSettings]$prs1 = $prs
+   [Corel.Interop.VGCore.PrintSettings]$prs1 =  $cdDocToPrint.PrintSettings
+   [Corel.Interop.VGCore.PrintSettingsClass]$prs2 = $prs
   #$prs|gm
- # $prs.Copies = 3
-  $prs.PrintRange = [Corel.Interop.VGCore.PrnPrintRange]::prnPageRange # 3 == PrnPrintRange VGCore.prnPageRange
+ # $prs.Copies = 3	
+	$enPrn1 = [Corel.Interop.VGCore.PrnPrintRange]::prnPageRange 
+ $prs.PrintRange = 3
+ $prs.PrintRange = $enPrn1 # 3 == PrnPrintRange VGCore.prnPageRange
   $prs.PageRange = "1-8"
   #$prs.Options.PrintJobInfo = $True
 
@@ -784,9 +793,17 @@ function Print1 ($file,[string]$obrazcyParentDir)
         break;
 
       }
-      if ($ptProc.HasExited -eq $null -and ($iW -lt 10 -or (($iW % 10) -eq 0)))
+      if (($iW -lt 10 -or (($iW % 10) -eq 0)))
       {
+		  if (($ptProc -ne $null) -and $ptProc.HasExited -eq $null)
+		  {
         Write-Debug "($ptProc).HasExited -eq null N $iW"
+			  }
+		  else
+		  {
+		      Write-Debug "($ptProc) N $iW"
+
+		  }
       }
     } # ptProc
 
