@@ -14,7 +14,7 @@
 #$gh1.pdftk()
 ##$gh1 = New-Object  PdfWriter.PdfInternal.Ghostscript
 #$ErrorActionPreference =  "Inquire" #
- $DebugPreference = "Continue" 
+$DebugPreference = "Continue"
 Set-StrictMode -Version 2.0
 $scriptStartDate = Get-Date
 
@@ -316,23 +316,23 @@ function PrintByRegCommand ([string]$file,[string]$printer)
 }
 
 
-function PrintCorelDrawInternal ([string]$fileToPrint,[string]$printer, $cdraw)
+function PrintCorelDrawInternal ([string]$fileToPrint,[string]$printer,$cdraw)
 {
-	trap
-	{
-		Write-Debug "PrintCorelDrawInternal trap: $_"
-		#TODO:
-		If ( [IntPtr]::Size * 8 -ne 64 )
-		{
-			return	"PrintCorelDrawInternal trap:32 $_ !!"
-		}
-		Else
-		{
-			 return	"64!! PrintCorelDrawInternal trap: $_"
-		}
-		#return $true	
-	}
-	if ($cdraw -eq $null)
+  trap
+  {
+    Write-Debug "PrintCorelDrawInternal trap: $_"
+    #TODO:
+    if ([intptr]::Size * 8 -ne 64)
+    {
+      return "PrintCorelDrawInternal trap:32 $_ !!"
+    }
+    else
+    {
+      return "64!! PrintCorelDrawInternal trap: $_"
+    }
+    #return $true	
+  }
+  if ($cdraw -eq $null)
   {
     $cdraw = New-Object -Com CorelDRAW.Application
     $cdraw.Visible = $false
@@ -343,7 +343,7 @@ function PrintCorelDrawInternal ([string]$fileToPrint,[string]$printer, $cdraw)
 
   $prs = $cdDocToPrint.PrintSettings
   #$prs|gm
- # $prs.Copies = 3
+  # $prs.Copies = 3
   $prs.PrintRange = 3 # 3 == PrnPrintRange VGCore.prnPageRange
   $prs.PageRange = "1-8"
   #$prs.Options.PrintJobInfo = $True
@@ -383,51 +383,51 @@ function PrintCorelDrawInternal ([string]$fileToPrint,[string]$printer, $cdraw)
   $cdDocToPrint.Close()
 
 }
- $cdraw = $null
+$cdraw = $null
 
 function PrintCorelDraw ([string]$fileToPrint,[string]$printer)
 {
-	trap
-	{
-		Write-Debug "PrintCorelDraw trap: $_"
-		return $true	
-	}
+  trap
+  {
+    Write-Debug "PrintCorelDraw trap: $_"
+    return $true
+  }
   if ($cdraw -eq $null)
   {
     $cdraw = New-Object -Com CorelDRAW.Application
     $cdraw.Visible = $false
   }
-  $err =	PrintCorelDrawInternal 	$fileToPrint  $printer	$cdraw
-	if ( $err -ne $null)
-	{
-		 If ( [IntPtr]::Size * 8 -ne 64 )
-		{
-		 #C:\Windows\SysNative\WindowsPowerShell\v1.0\PowerShell.exe -File $MyInvocation.MyCommand.Path -YourParam1 $YourParam1 -YourParam2 $YourParam2
-			
-		}
-		Else
-		{
-			$func = (get-command PrintCorelDrawInternal);
-			$jobCD = Start-Job -ScriptBlock $func.ScriptBlock -ArgumentList @($fileToPrint,$printer) -RunAs32
-			Wait-Job $jobCD	 | Out-Null	  
-			$_out1 =  $null
-			try {
-			$_out1 = $jobCD.ChildJobs[0].Output[0]
-			}
-			catch
-			{  
-				  Write-Debug " p$jobCD.ChildJobs[0].Output[0]  catched:$_ ||| $_out1" 
-				$_out1 = $_
-			}
+  $err = PrintCorelDrawInternal $fileToPrint $printer $cdraw
+  if ($err -ne $null)
+  {
+    if ([intptr]::Size * 8 -ne 64)
+    {
+      #C:\Windows\SysNative\WindowsPowerShell\v1.0\PowerShell.exe -File $MyInvocation.MyCommand.Path -YourParam1 $YourParam1 -YourParam2 $YourParam2
 
-			if ($_out1 -eq $null -and $jobCD.State -eq "Completed")
-			{
-				return $_out1
-			}
-			else
-			{
-			
-			 $code =	@"
+    }
+    else
+    {
+      $func = (Get-Command PrintCorelDrawInternal);
+      $jobCD = Start-Job -ScriptBlock $func.ScriptBlock -ArgumentList @( $fileToPrint,$printer) -RunAs32
+      Wait-Job $jobCD | Out-Null
+      $_out1 = $null
+      try {
+        $_out1 = $jobCD.ChildJobs[0].Output[0]
+      }
+      catch
+      {
+        Write-Debug " p$jobCD.ChildJobs[0].Output[0]  catched:$_ ||| $_out1"
+        $_out1 = $_
+      }
+
+      if ($_out1 -eq $null -and $jobCD.State -eq "Completed")
+      {
+        return $_out1
+      }
+      else
+      {
+
+        $code = @"
 				using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -489,33 +489,33 @@ namespace CorelInterop1
         }
 	}
 }
-"@	
-	$vgcore = [System.Reflection.Assembly]::LoadWithPartialName("Corel.Interop.VGCore")
+"@
+        $vgcore = [System.Reflection.Assembly]::LoadWithPartialName("Corel.Interop.VGCore")
 
-										#"Corel.Interop.VGCore"
-				
-				try
-				{
-Add-Type -ReferencedAssemblies @($vgcore) -TypeDefinition $code -Language CSharp  | Out-Null
-			 }
-				catch
-				{
-				  	  Write-Debug " Add-Type  catched:$_ " 
-				}
+        #"Corel.Interop.VGCore"
 
-  $err = [CorelInterop1.Class1]::Print($fileToPrint, $printer)
+        try
+        {
+          Add-Type -ReferencedAssemblies @( $vgcore) -TypeDefinition $code -Language CSharp | Out-Null
+        }
+        catch
+        {
+          Write-Debug " Add-Type  catched:$_ "
+        }
 
-			if ($err -eq $false)
-			  {
-				 $err = $null
-				
-			}
+        $err = [CorelInterop1.Class1]::Print($fileToPrint,$printer)
+
+        if ($err -eq $false)
+        {
+          $err = $null
+
+        }
 
 
-		}
-	}
-	}
-	return $err
+      }
+    }
+  }
+  return $err
 }
 function TestFileWritable ($file1)
 {
@@ -840,15 +840,15 @@ function Print1 ($file,[string]$obrazcyParentDir)
   if ($errP -ne $null)
   {
     [System.Diagnostics.Process]$ptProc0,$errP0 = printto "`"$fileToPrint`"" "`"$PRINTERNAME`""
-	if ($errP -ne $false -and $errP0 -eq $null -and $ptProc0 -ne $null -and $ptProc0.HasExited -eq $null)
-	  {
-		  Write-Debug "Failed second try"
-	  }
-	  else
-	  {
-		$ptProc = $ptProc0
-		$errP = $errP0
-	 }
+    if ($errP -ne $false -and $errP0 -eq $null -and $ptProc0 -ne $null -and $ptProc0.HasExited -eq $null)
+    {
+      Write-Debug "Failed second try"
+    }
+    else
+    {
+      $ptProc = $ptProc0
+      $errP = $errP0
+    }
   }
 
   #$ptSuccess  Silently-ErrorVariable ProcessError -ErrorAction Continue 
@@ -926,48 +926,48 @@ function Print1 ($file,[string]$obrazcyParentDir)
       }
       if (($iW -lt 10 -or (($iW % 10) -eq 0)))
       {
-		  if (($ptProc -ne $null) -and $ptProc.HasExited -eq $null)
-		  {
-        Write-Debug "($ptProc).HasExited -eq null N $iW"
-			  }
-		  else
-		  {
-		      Write-Debug "($ptProc) N $iW"
+        if (($ptProc -ne $null) -and $ptProc.HasExited -eq $null)
+        {
+          Write-Debug "($ptProc).HasExited -eq null N $iW"
+        }
+        else
+        {
+          Write-Debug "($ptProc) N $iW"
 
-		  }
+        }
       }
-		#if ($iW -gt (100000 / $waitPeriodMs) -and  $ptProc.HasExited -eq $null) #TODO
-		#{
-		#	$errP = "не удалось напечатать"
-		#}
+      #if ($iW -gt (100000 / $waitPeriodMs) -and  $ptProc.HasExited -eq $null) #TODO
+      #{
+      #	$errP = "не удалось напечатать"
+      #}
     } # ptProc
-      if (($iW -lt 10 -or (($iW % 10) -eq 0)))
-      {
-       Write-Host -NoNewline "."
-       # Write-Debug -no "($ptProc).HasExited -eq null N $iW"
+    if (($iW -lt 10 -or (($iW % 10) -eq 0)))
+    {
+      Write-Host -NoNewline "."
+      # Write-Debug -no "($ptProc).HasExited -eq null N $iW"
 
-      }
+    }
     if ($errP -ne $null)
     {
 
       $errP2 = $null;
-		try
-		{
-      if ($errP.Exception.InnerException.NativeErrorCode -eq 1155)
+      try
       {
-
-        $errP2 = PrintByRegCommand "`"$($file.FullName)`"" "`"$PRINTERNAME`""
-        if ($errP2 -eq $null)
+        if ($errP.Exception.InnerException.NativeErrorCode -eq 1155)
         {
-          $errP = $null
-          continue
+
+          $errP2 = PrintByRegCommand "`"$($file.FullName)`"" "`"$PRINTERNAME`""
+          if ($errP2 -eq $null)
+          {
+            $errP = $null
+            continue
+          }
         }
       }
-	  }
-	  catch
-	{
-		Write-Debug "non exception errP: $errP	, $_"
-	}
+      catch
+      {
+        Write-Debug "non exception errP: $errP	, $_"
+      }
 
       $errPrint = ("`"$($file.FullName)`"" + " не конвертируется, возможно не имеет печатающей программы :" + $errP.ToString())
       Write-Warning $errPrint
@@ -991,9 +991,9 @@ function Print1 ($file,[string]$obrazcyParentDir)
         continue
 
       }
-      elseif ($iW -gt 1000)	 #TODO
+      elseif ($iW -gt 1000) #TODO
       {
-        Write-Warning  "Конвертация файла `"$($file.FullName)`" прервана, т.к. затянулась"
+        Write-Warning "Конвертация файла `"$($file.FullName)`" прервана, т.к. затянулась"
         Remove-Item $outFile -Force -ErrorAction SilentlyContinue;
         break;
 
@@ -1001,7 +1001,7 @@ function Print1 ($file,[string]$obrazcyParentDir)
       $StopPressed = Wait-KeyPress2 $keysToSkip
       if ($StopPressed)
       { #$ptProc.
-        Write-Warning  "Конвертация файла `"$($file.FullName)`" пропущена по запросу пользователя"
+        Write-Warning "Конвертация файла `"$($file.FullName)`" пропущена по запросу пользователя"
         Remove-Item $outFile -Force -ErrorAction SilentlyContinue;
         break;
       }
