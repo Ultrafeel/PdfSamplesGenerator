@@ -171,3 +171,82 @@ $cdraw.Quit()
 ##$cdrawScript.FileOpen($file.FullName)
 #$cdrawScript |gm
 $cdr_doc
+
+  $codeCOMClear =
+@"
+namespace TextCreatorCS
+{
+    class Program
+    {
+        static bool Print(string fileToPrint, string printer)
+        {
+            Type pia_type = Type.GetTypeFromProgID("CorelDRAW.Application");
+            object cdraw1 = Activator.CreateInstance(pia_type);
+            IVGApplication cdraw = cdraw1 as IVGApplication;//Application
+            //var fileToPrint = @"d:\!Work\Pdf_c\Тестовый каталог\(011-1-1-48929)(А4).cdr";
+            IVGDocument cdDocToPrint = cdraw.OpenDocument(fileToPrint); //$cdraw.OpenDocument($file.FullName) AsCopy AsCopy
+            //$cdDocToPrint.SetDocVisible($false)
+
+            IPrnVBAPrintSettings prs = cdDocToPrint.PrintSettings;//
+            //$prs|gm
+            prs.Copies = 1;
+            prs.PrintRange = VGCore.PrnPrintRange.prnPageRange;//Corel.Interop. 3 == PrnPrintRange VGCore.prnPageRange
+            prs.PageRange = "1-8";
+            if (prs.Printer.Name != printer)
+            {
+                for (int iPr = 0; iPr < cdraw.Printers.Count; iPr++)
+                {
+                    IPrnVBAPrinter pr2 = null;//Printer IPrnVBAPrinter
+                    try
+                    {
+                        pr2 = cdraw.Printers[iPr];
+                    }
+                    catch (System.ArgumentException )
+                    {
+
+                        continue;
+                    }
+                    if (pr2 != null && (pr2.Name == printer))
+                    { 
+                        //prs.Printer = Convert.ChangeType(pr2, prs.Printer
+                            prs.Printer = (Printer)pr2;//
+                       /* PropertyInfo propertyInfo = prs.GetType().GetProperty("Printer");
+                        if (propertyInfo == null)
+                        {
+                            //using  ;
+                            //VGCore.IPrnVBAPrintSettings.
+                            //Type t = prs.Printer.GetType();
+                        }
+                        else
+                            propertyInfo.SetValue(prs, pr2, null);
+                        */
+//Convert.ChangeType(pr2, propertyInfo.PropertyType)
+                       // prs.Printer = Convert.ChangeType(pr2, prs.Printer.GetType());
+                        //pr2;
+                        break;
+                    }
+
+                }
+            }
+
+            if (prs.Printer == null)
+            { return true; }
+            if (prs.Printer.Name != printer)
+            {
+                return true;
+            }
+
+            if (!prs.Printer.Ready)
+            {
+                return true;
+            }
+
+
+            // #With .PostScript
+            //#.DownloadType1 = True
+            //#.Level = prnPSLevel3;
+            cdDocToPrint.PrintOut();//Corel.Interop.VGCore.
+            ((IVGDocument)cdDocToPrint).Close();
+            return false;
+        }
+"@
