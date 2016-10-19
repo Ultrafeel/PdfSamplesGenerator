@@ -1443,7 +1443,7 @@ $null = (Get-WmiObject -ComputerName . -Class Win32_Printer -Filter "Name='$defp
 #>
 if ($initiallyDefaultPrinter -ne $null)
 {
-  $initiallyDefaultPrinter.SetDefaultPrinter()
+  $initiallyDefaultPrinter.SetDefaultPrinter() | Out-Null
 }
 echo "Обработка `"$targetP`" завершена. Скрипт завершён."
 release-comobject $cdraw
