@@ -384,7 +384,92 @@ function PrintCorelDrawInternal ([string]$fileToPrint,[string]$printer,$cdraw)
 
 }
 $cdraw = $null
+    function SharpPrintCorelDraw ($using1, $cast)
+    {
 
+               $code = @"
+				using System;
+ $using1//using Corel.Interop.VGCore;
+
+namespace CorelInterop1
+{
+    public class Class1
+    {
+        static public bool Print(string fileToPrint, string printer)
+        {
+             Type pia_type = Type.GetTypeFromProgID("CorelDRAW.Application");
+            object cdraw1 = Activator.CreateInstance(pia_type);
+            IVGApplication cdraw = cdraw1 as IVGApplication;//Application
+            //var fileToPrint = @"d:\!Work\Pdf_c\Тестовый каталог\(011-1-1-48929)(А4).cdr";
+            IVGDocument cdDocToPrint = cdraw.OpenDocument(fileToPrint, 0); //cdraw.OpenDocument(file.FullName) AsCopy AsCopy
+            //cdDocToPrint.SetDocVisible(false)
+
+            IPrnVBAPrintSettings prs = cdDocToPrint.PrintSettings;//
+             prs.Copies = 1;
+            prs.PrintRange = PrnPrintRange.prnPageRange;//Corel.Interop. 3 == PrnPrintRange VGCore.prnPageRange
+            prs.PageRange = "1-8";
+            if (prs.Printer.Name != printer)
+            {
+                for (int iPr = 0; iPr < cdraw.Printers.Count; iPr++)
+                {
+                    IPrnVBAPrinter pr2 = null;//Printer IPrnVBAPrinter
+                    try
+                    {
+                        pr2 = cdraw.Printers[iPr];
+                    }
+                    catch (System.ArgumentException )
+                    {
+
+                        continue;
+                    }
+                    if (pr2 != null && (pr2.Name == printer))
+                    { 
+                        //prs.Printer = Convert.ChangeType(pr2, prs.Printer
+                            prs.Printer = $cast pr2;//(Printer)
+                       /* PropertyInfo propertyInfo = prs.GetType().GetProperty("Printer");
+                        if (propertyInfo == null)
+                        {
+                            //using  ;
+                            //VGCore.IPrnVBAPrintSettings.
+                            //Type t = prs.Printer.GetType();
+                        }
+                        else
+                            propertyInfo.SetValue(prs, pr2, null);
+                        */
+//Convert.ChangeType(pr2, propertyInfo.PropertyType)
+                       // prs.Printer = Convert.ChangeType(pr2, prs.Printer.GetType());
+                        //pr2;
+                        break;
+                    }
+
+                }
+            }
+
+            if (prs.Printer == null)
+            { return true; }
+            if (prs.Printer.Name != printer)
+            {
+                return true;
+            }
+
+            if (!prs.Printer.Ready)
+            {
+                return true;
+            }
+
+
+            // #With .PostScript
+            //#.DownloadType1 = True
+            //#.Level = prnPSLevel3;
+            cdDocToPrint.PrintOut();//Corel.Interop.VGCore.
+            ((IVGDocument)cdDocToPrint).Close();
+            return false;
+        }
+	}
+}
+"@
+       return $code;
+    }
 function PrintCorelDraw ([string]$fileToPrint,[string]$printer)
 {
   trap
@@ -426,82 +511,44 @@ function PrintCorelDraw ([string]$fileToPrint,[string]$printer)
       }
       else
       {
-
-        $code = @"
-				using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Corel.Interop.VGCore;
-
-namespace CorelInterop1
-{
-    public class Class1
-    {
-        static public bool Print(string fileToPrint, string printer)
-        {
-            Type pia_type = Type.GetTypeFromProgID("CorelDRAW.Application");
-            var cdraw1 = Activator.CreateInstance(pia_type);
-            Application cdraw = cdraw1 as Application;
-             Document cdDocToPrint = cdraw.OpenDocument(fileToPrint); //cdraw.OpenDocument(file.FullName) AsCopy AsCopy
-            //cdDocToPrint.SetDocVisible(false)
-
-            var prs = cdDocToPrint.PrintSettings;
-            //prs|gm
-            prs.Copies = 1;
-            prs.PrintRange = Corel.Interop.VGCore.PrnPrintRange.prnPageRange;// 3 == PrnPrintRange VGCore.prnPageRange
-            prs.PageRange = "1-8";
-            if (prs.Printer.Name != printer)
-            {
-                for (var iPr = 0; iPr < cdraw.Printers.Count; iPr++)
-                {
-                    //pr2 = null;
-                    var pr2 = cdraw.Printers[iPr];
-                    if (pr2 != null && (pr2.Name == printer))
-                    {
-                        prs.Printer = pr2;
-                        break;
-                    }
-
-                }
-            }
-
-            if (prs.Printer == null)
-            { return true; }
-            if (prs.Printer.Name != printer)
-            {
-                return true;
-            }
-
-            if (!prs.Printer.Ready)
-            {
-                return true;
-            }
-
-
-            // #With .PostScript
-            //#.DownloadType1 = True
-            //#.Level = prnPSLevel3;
-            cdDocToPrint.PrintOut();
-            ((Corel.Interop.VGCore.IVGDocument)cdDocToPrint).Close();
-            return false;
-        }
-	}
-}
-"@
+        
+ 
         $vgcore = [System.Reflection.Assembly]::LoadWithPartialName("Corel.Interop.VGCore")
+         $comcore = [System.Reflection.Assembly]::LoadWithPartialName("VGCoreAuto.tlb")
 
-        #"Corel.Interop.VGCore"
-
+        $usingVGCore = "using Corel.Interop.VGCore;"#
+         $usingVGCoreCom = "VGCore"
+          $printerCast =  "(Printer)";
+          $code2 = SharpPrintCorelDraw  $usingVGCore "" 
+         $addErr = $null
         try
         {
-          Add-Type -ReferencedAssemblies @( $vgcore) -TypeDefinition $code -Language CSharp | Out-Null
+          Add-Type -ErrorVariable addErr  -ReferencedAssemblies @( $vgcore) -TypeDefinition $code2 -Language CSharp | Out-Null
         }
         catch
         {
-          Write-Debug " Add-Type  catched:$_ "
+          if ($_.FullyQualifiedErrorId -eq "TYPE_ALREADY_EXISTS,Microsoft.PowerShell.Commands.AddTypeCommand")
+            {
+              Write-Debug " Add-Type  already:$_ "
+                $addErr = $null;}
+         else { Write-Debug " Add-Type  catched:$_ " }
         }
+        if ($addErr -ne $null)
+         {      
+            $addErr = $null
+            $code3  = SharpPrintCorelDraw $usingVGCore $printerCast
+            try
+            {
+              Add-Type -ErrorVariable addErr -ReferencedAssemblies @( $vgcore) -TypeDefinition $code3 -Language CSharp | Out-Null
+            }
+            catch
+            {
+              if ($_.FullyQualifiedErrorId -eq "TYPE_ALREADY_EXISTS,Microsoft.PowerShell.Commands.AddTypeCommand")
+            {    Write-Debug " Add-Type  already:$_ "
+               $addErr = $null;}
+              else { Write-Debug " Add-Type  catched:$_ " }
+             }
+         }
 
         $err = [CorelInterop1.Class1]::Print($fileToPrint,$printer)
 
