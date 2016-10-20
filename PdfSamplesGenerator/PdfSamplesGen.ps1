@@ -34,6 +34,10 @@ function EchoA
 $logFile = $null
  function WarnAndLog ($message)
 {
+    if ($logFile -eq $null)
+    {
+        Write-Debug "$logFile null"   
+    }
       Write-Warning $message
      "[$(get-date)] $message" >> $logFile
 }
@@ -714,10 +718,8 @@ function Print1 ($file,[string]$obrazcyParentDir)
     elseif ($cutRes -eq 0)
     {
 
-      $em3 = "  Cannot convert $($file.FullName).  Cannot cut tmp file $outFile"
+      WarnAndLog "  Cannot convert $($file.FullName).  Cannot cut tmp file $outFile"
 
-      Write-Warning $em3
-      "[$(get-date)] $em3" >> $logFile
       Remove-Item $outFile -Force -ErrorAction SilentlyContinue;
 
       return
@@ -921,11 +923,6 @@ function Print1 ($file,[string]$obrazcyParentDir)
   #if ($ptErr -ne $null) {
 
   #  $errPrint = ("`"$($file.FullName)`"" + " не имеет печатающей программы :" + $ptErr.ToString())
-  #  Write-Warning $errPrint
-  #  "[$(get-date)] $errPrint" >> $logFile
-  # }
-  # else
-
   # $printto.exe "in\example.rtf" "$PRINTERNAME"
   #  $ptERRORLEVEL = $lastexitcode
   # if ($ptERRORLEVEL -eq 0) $res11 = & $pdftk "$outFile" dump_data | Select-string -Pattern "PageMediaNumber: ([0-9]*)"
@@ -947,10 +944,8 @@ function Print1 ($file,[string]$obrazcyParentDir)
         }
         elseif ($cutRes -eq 0)
         {
-          $em3 = "  Cannot convert $($file.FullName).  Cannot cut tmp file $outFile"
+          WarnAndLog "  Cannot convert $($file.FullName).  Cannot cut tmp file $outFile"
 
-          Write-Warning $em3
-          "[$(get-date)] $em3" >> $logFile
           Remove-Item $outFile -Force -ErrorAction SilentlyContinue;
 
         }
@@ -978,9 +973,7 @@ function Print1 ($file,[string]$obrazcyParentDir)
       }
       elseif ($ptProc.HasExited -and $ptProc.ExitCode -ge 2 -and ($iW -gt (100000 / $waitPeriodMs)))
       {
-        $errPrint = ("`"$($file.FullName)`"" + " не конвертируется. Errcode = " + $ptProc.ExitCode)
-        Write-Warning $errPrint
-        "[$(get-date)] $errPrint" >> $logFile
+        WarnAndLog ("`"$($file.FullName)`"" + " не конвертируется. Errcode = " + $ptProc.ExitCode)
         break;
 
       }
@@ -1029,9 +1022,8 @@ function Print1 ($file,[string]$obrazcyParentDir)
         Write-Debug "non exception errP: $errP	, $_"
       }
 
-      $errPrint = ("`"$($file.FullName)`"" + " не конвертируется, возможно не имеет печатающей программы :" + $errP.ToString())
-      Write-Warning $errPrint
-      "[$(get-date)] $errPrint" >> $logFile
+      WarnAndLog ("`"$($file.FullName)`"" + " не конвертируется, возможно не имеет печатающей программы :" + $errP.ToString())
+
       break;
 
     }
@@ -1109,9 +1101,9 @@ $archs =
 #(("z","taz"),"Z"),
 #(("cpio"),"CPIO")
 
-function AlgA_Iter
+function AlgA_Iter($value,$obrazcyParentDir)
 {
-  param($value,$obrazcyParentDir)
+  
   if ($docExtensions1 -contains $value.Extension)
   {
 
@@ -1422,7 +1414,7 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
         }
         else
         {
-          "[$(get-date)] архив `"$($value.Fullname)`" не содержит искомых файлов" >> $logFile
+          WarnAndLog "[$(get-date)] архив `"$($value.Fullname)`" не содержит искомых файлов"
 
         }
 
