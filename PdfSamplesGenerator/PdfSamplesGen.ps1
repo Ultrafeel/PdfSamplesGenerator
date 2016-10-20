@@ -32,17 +32,28 @@ function EchoA
 #	continue	
 #}
 $logFile = $null
-$waitPeriodMs = 100
+ function WarnAndLog ($message)
+{
+      Write-Warning $message
+     "[$(get-date)] $message" >> $logFile
+}
+#TODO:
+$waitPeriodMs = 1000
 function Wait-KeyPress2 ($keysToSkip)
 {
   #Write-Host $prompt , $skipMessage	$prompt='Press "S" key to skip this',
 
   #$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
   $doSleep = $false;
+  Write-Host -NoNewline "_"
   if ($Host.UI.RawUI.KeyAvailable)
   {
-    $key1 = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-    if (@( $keysToSkip | % { [char]$_ }) -inotcontains $key1.Character) # -icontains $key1.Character
+    Write-Host -NoNewline ","
+    #Write-Debug "KeyPressed to stop"
+    $key1 =  $host.UI.RawUI.ReadKey("AllowCtrlC,IncludeKeyDown,IncludeKeyUp")
+    #$host.UI.RawUI.ReadKey("NoEcho") 
+    #[console]::ReadKey("NoEcho,AllowCtrlC") 
+    if ($key1 -eq $null -or (!$key1.KeyDown) -or @( $keysToSkip | % { [char]$_ }) -inotcontains $key1.Character) # -icontains $key1.Character
     {
       if ($key1.Character -ne 0)
       {
@@ -56,7 +67,7 @@ function Wait-KeyPress2 ($keysToSkip)
     }
 
     Write-Debug "KeyPressed withresult doSleep $doSleep :"
-    Write-Debug $key1
+    Write-Debug " =$([int]$key1.Character)= $key1 =kd: $($key1.KeyDown)."
 
   }
   else
@@ -119,6 +130,7 @@ function printto
   {
     # echo "Convert $file error "
     # return $null
+    Write-Output "Verb = print for : $file "
     $startInfo.Verb = "print"
     $startInfo.Arguments = $null
     #if ($procForFile.Verbs -notcontains "print")
@@ -519,7 +531,7 @@ function PrintCorelDraw ([string]$fileToPrint,[string]$printer)
         $usingVGCore = "using Corel.Interop.VGCore;"#
          $usingVGCoreCom = "VGCore"
           $printerCast =  "(Printer)";
-          $code2 = SharpPrintCorelDraw  $usingVGCore "" 
+          $code2 = SharpPrintCorelDraw  $usingVGCore $printerCast  
          $addErr = $null
         try
         {
@@ -536,7 +548,7 @@ function PrintCorelDraw ([string]$fileToPrint,[string]$printer)
         if ($addErr -ne $null)
          {      
             $addErr = $null
-            $code3  = SharpPrintCorelDraw $usingVGCore $printerCast
+            $code3  = SharpPrintCorelDraw $usingVGCore ""
             try
             {
               Add-Type -ErrorVariable addErr -ReferencedAssemblies @( $vgcore) -TypeDefinition $code3 -Language CSharp | Out-Null
@@ -1040,7 +1052,7 @@ function Print1 ($file,[string]$obrazcyParentDir)
       }
       elseif ($iW -gt 1000) #TODO
       {
-        Write-Warning "Конвертация файла `"$($file.FullName)`" прервана, т.к. затянулась"
+        WarnAndLog "Конвертация файла `"$($file.FullName)`" прервана, т.к. затянулась"
         Remove-Item $outFile -Force -ErrorAction SilentlyContinue;
         break;
 
@@ -1048,7 +1060,7 @@ function Print1 ($file,[string]$obrazcyParentDir)
       $StopPressed = Wait-KeyPress2 $keysToSkip
       if ($StopPressed)
       { #$ptProc.
-        Write-Warning "Конвертация файла `"$($file.FullName)`" пропущена по запросу пользователя"
+        WarnAndLog "Конвертация файла `"$($file.FullName)`" пропущена по запросу пользователя"
         Remove-Item $outFile -Force -ErrorAction SilentlyContinue;
         break;
       }
@@ -1158,10 +1170,16 @@ function ExtractSpecified
     # Write-Debug  - set 	$DebugPreference = "Continue" 
     trap
     {
-      Write-Debug " u7z 1 trapped:$_ "
+      Write-Debug  " u7z 1 trapped:$_ "
       continue
     }
-    & $u7z "e" $value.Name "-o$TMPfullP" "-i@$TMPfiltFile" "-y"
+    $out7z = & $u7z "e" "$($value.Name)" "-o$TMPfullP" "-i@$TMPfiltFile" "-y"
+     if (!$?)
+       {     
+             Remove-Item $TMPfullP -Force -Recurse
+          $TMPfullP = $null
+        }
+        Write-Debug " u7z = $out7z"
     Remove-Item $TMPfiltFile -Force
     cd $oldWD
   }
@@ -1186,8 +1204,8 @@ function ExtractSpecified
 function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
 {
   $logFile = ((Get-Item $MyInvocation.ScriptName).Directory).FullName + ".log"
-
-
+  Write-Output "Log file (not created if no error): $(Get-Location)\$logFile  "
+    
   [boolean]$algAOnly = $algAForB
 
   $cont1 = Get-ChildItem $targetP1
@@ -1299,7 +1317,7 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
       }
 
       # $aafiles
-      $aafiles[0].pathAr | Out-Host
+      Write-debug "aafiles[0].pathAr = $($aafiles[0].pathAr)" 
       # если папок нет
       if (@( $aafiles | Where-Object { $_.isdir }).length -eq 0)
       {
@@ -1307,8 +1325,13 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
         #[System.Reflection.Assembly]::LoadWithPartialName("System.IO.Path")
         $wildCardFArray = $docExtensions
         $TMPfullP = ExtractSpecified $value $wildCardFArray
-        Algs (Get-Item $TMPfullP) $true $value.Directory
-        Remove-Item $TMPfullP -Force -Recurse
+        Write-debug   "TMPfullP = $TMPfullP "
+         $extracteFolder = Get-Item $TMPfullP
+          if ($extracteFolder -ne $null)
+          {
+            Algs $extracteFolder $true $value.Directory
+          }
+          Remove-Item $TMPfullP -Force -Recurse  | Out-Null
 
       }
       else
@@ -1380,8 +1403,14 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
           $wildCardFArray2 = @( $pretendent1[0].Path) # $pretendent1 |% { $_.Path } 	 
 
           $TMPfullP = ExtractSpecified $value $wildCardFArray2
-          Algs (Get-Item $TMPfullP) $true $value.Directory
-          Remove-Item $TMPfullP -Force -Recurse
+                   Write-debug   "TMPfullP = $TMPfullP "
+         $extracteFolder = Get-Item $TMPfullP
+          if ($extracteFolder -ne $null)
+          {
+
+            Algs $extracteFolder $true $value.Directory
+          }
+          Remove-Item $TMPfullP -Force -Recurse | Out-Null
 
         }
         else
