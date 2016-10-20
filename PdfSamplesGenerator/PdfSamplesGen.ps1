@@ -936,8 +936,8 @@ function Print1 ($file,[string]$obrazcyParentDir)
     {
 
       if ($outFileCut -eq $null)
-      {                    
-        $outFileCut = Join-Path  $obrazcyParentDir ($sampleFileName + ".pdf8cut") #($outFile
+      {
+        $outFileCut = ("$outFileS" + ".8cut.pdf") 
 
         $cutRes = Cut_PdfTo8 $outFile $outFileCut
         if (($cutRes -lt 0) -and (Test-Path $outFileCut))
