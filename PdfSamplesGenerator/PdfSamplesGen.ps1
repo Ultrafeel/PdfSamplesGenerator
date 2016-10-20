@@ -639,6 +639,8 @@ function PrinInDesign ([string]$fileToPrint,[string]$printer)
 
 
 }
+  $samplesTargetDirName = "Образцы"
+
 #directory to process
 function Print1 ($file,[string]$obrazcyParentDir)
 {
@@ -654,7 +656,6 @@ function Print1 ($file,[string]$obrazcyParentDir)
   }
 
   #echo "obrazcyParentDir = $obrazcyParentDir"
-  $samplesTargetDirName = "Образцы"
   $sampleSuffix = "_образец"
   $watermarkText = "OBRAZEC" # "образец"
 
@@ -697,7 +698,7 @@ function Print1 ($file,[string]$obrazcyParentDir)
   if ($file.Extension -eq ".pdf")
   {
 
-    $outFileCut = ("$outFileS" + ".8cut.pdf") #($outFile
+    $outFileCut = Join-Path $obrazcyParentDir ("$sampleFileName" + ".8cut.pdf") #($outFile
 
 
     $cutRes = Cut_PdfTo8 $file.FullName $outFileCut
@@ -935,8 +936,8 @@ function Print1 ($file,[string]$obrazcyParentDir)
     {
 
       if ($outFileCut -eq $null)
-      {
-        $outFileCut = ("$outFileS" + ".pdf8cut") #($outFile
+      {                    
+        $outFileCut = Join-Path  $obrazcyParentDir ($sampleFileName + ".pdf8cut") #($outFile
 
         $cutRes = Cut_PdfTo8 $outFile $outFileCut
         if (($cutRes -lt 0) -and (Test-Path $outFileCut))
@@ -1140,7 +1141,6 @@ else
     $targetP = (Get-Item $PSCommandPath).Directory
 
   }
-  echo "Скрипт запущен для $targetP"
   while ($targetP -eq $null -or !(Test-Path $targetP))
   {
     echo "Не получилось найти $targetP . Введите вручную"
@@ -1153,8 +1153,15 @@ else
   }
   # Get-Location 
 }
-
-
+  echo "Скрипт запущен для $targetP"
+function SetLog
+ {   
+     $thisScr =  Get-Item $MyInvocation.ScriptName
+     #(Join-Path $targetP $samplesTargetDirName)
+       $logFile = Join-Path $targetP ($thisScr.Name + ".log")
+   Write-Output "Log file (not created if no error): `"$logFile`"  "
+  }
+  SetLog
 function ExtractSpecified
 {
   param($value,$wildCardFArray)
@@ -1203,10 +1210,9 @@ function ExtractSpecified
 
 function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
 {
-  $logFile = ((Get-Item $MyInvocation.ScriptName).Directory).FullName + ".log"
+  #$logFile = ((Get-Item $MyInvocation.ScriptName).Directory).FullName + ".log"
    # WarnAndLog "hey"
-  Write-Output "Log file (not created if no error): `"$logFile`"  "
-    
+     
   [boolean]$algAOnly = $algAForB
 
   $cont1 = Get-ChildItem $targetP1
