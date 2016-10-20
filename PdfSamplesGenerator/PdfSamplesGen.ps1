@@ -38,7 +38,7 @@ $logFile = $null
      "[$(get-date)] $message" >> $logFile
 }
 #TODO:
-$waitPeriodMs = 1000
+$waitPeriodMs = 200
 function Wait-KeyPress2 ($keysToSkip)
 {
   #Write-Host $prompt , $skipMessage	$prompt='Press "S" key to skip this',
@@ -1050,7 +1050,7 @@ function Print1 ($file,[string]$obrazcyParentDir)
         continue
 
       }
-      elseif ($iW -gt 1000) #TODO
+      elseif ($iW -gt 9000) #TODO
       {
         WarnAndLog "Конвертация файла `"$($file.FullName)`" прервана, т.к. затянулась"
         Remove-Item $outFile -Force -ErrorAction SilentlyContinue;
@@ -1204,7 +1204,8 @@ function ExtractSpecified
 function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
 {
   $logFile = ((Get-Item $MyInvocation.ScriptName).Directory).FullName + ".log"
-  Write-Output "Log file (not created if no error): $(Get-Location)\$logFile  "
+   # WarnAndLog "hey"
+  Write-Output "Log file (not created if no error): `"$logFile`"  "
     
   [boolean]$algAOnly = $algAForB
 
