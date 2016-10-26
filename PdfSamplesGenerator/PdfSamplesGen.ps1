@@ -530,7 +530,7 @@ function PrintCorelDraw ([string]$fileToPrint,[string]$printer)
         
  
         $vgcore = [System.Reflection.Assembly]::LoadWithPartialName("Corel.Interop.VGCore")
-         $comcore = [System.Reflection.Assembly]::LoadWithPartialName("VGCoreAuto.tlb")
+        # $comcore = [System.Reflection.Assembly]::LoadWithPartialName("VGCoreAuto.tlb")
 
         $usingVGCore = "using Corel.Interop.VGCore;"#
          $usingVGCoreCom = "VGCore"
@@ -1159,6 +1159,7 @@ function ExtractSpecified
   param($value,$wildCardFArray)
 
   $TMPfullP = $value.FullName + "ext"
+  $out7z =  $null
   if ($wildCardFArray.Count -gt 1)
   {
     $TMPfiltFile = "ExtList.extList" #Get-Item ($value.Directory.ToString()+  [System.IO.Path]::GetTempFileName()
@@ -1178,8 +1179,7 @@ function ExtractSpecified
              Remove-Item $TMPfullP -Force -Recurse
           $TMPfullP = $null
         }
-        Write-Debug " u7z = $out7z"
-    Remove-Item $TMPfiltFile -Force
+     Remove-Item $TMPfiltFile -Force
     cd $oldWD
   }
   else
@@ -1192,9 +1192,15 @@ function ExtractSpecified
       Write-Debug " u7z 2 trapped:$_ "
       continue
     }
-    & $u7z "e" $value.Name "-o$TMPfullP" "-i!$wd" "-y"
+    $out7z =  & $u7z "e" $value.Name "-o$TMPfullP" "-i!$wd" "-y"
+          if (!$?)
+       {     
+             Remove-Item $TMPfullP -Force -Recurse
+          $TMPfullP = $null
+        }
     cd $oldWD
   }
+  Write-Debug " u7z = $out7z"
 
   return $TMPfullP;
 
@@ -1373,7 +1379,10 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
           foreach ($mask in ("1_.pdf","*.pdf"))
           {
 
-            $pretendent1 = @( $aFfilesTargFolder | Where-Object { $_.pathAr[$_.pathAr.Count + (-1)] -like $mask })
+            $pretendent1 = @( $aFfilesTargFolder    |
+                 Where-Object {
+                      $_.pathAr[$_.pathAr.Count + (-1)] -like $mask 
+                 })
 
             if ($pretendent1.Count -gt 0)
             { break; }
