@@ -36,7 +36,7 @@ $logFile = $null
 {
     if ($logFile -eq $null)
     {
-        Write-Debug "$logFile null"   
+        Write-Debug "logFile null"   
     }
       Write-Warning $message
      "[$(get-date)] $message" >> $logFile
@@ -713,7 +713,10 @@ function PrinInDesignInternal ([string]$fileToPrint,[string]$printer,$InDesign1)
     {
         $nottryAgain = $jobCD.State -eq "Running"
          if ($nottryAgain)
-        { $tryI = 0   }
+        {
+            Write-Warning "maybe InDesign document wrong links"
+             $tryI = 0 
+        }
          Write-Warning "timeout -> Stop InDesign"
         Stop-Job $jobCD  | Out-Host
         try {
@@ -758,7 +761,7 @@ function PrinInDesignInternal ([string]$fileToPrint,[string]$printer,$InDesign1)
   $samplesTargetDirName = "Образцы"
 
 #directory to process
-function Print1 ($file,[string]$obrazcyParentDir)
+function Print1 ($file,[string]$obrazcyParentDir, [string]$targetName)
 {
 
   $checkExistance = $false;
@@ -776,8 +779,17 @@ function Print1 ($file,[string]$obrazcyParentDir)
   $watermarkText = "OBRAZEC" # "образец"
 
   $samplesTarget = Join-Path -Path $obrazcyParentDir -ChildPath $samplesTargetDirName
-  $sampleFileName = $file.basename + $sampleSuffix
+  $sampleFileName = $null
+    
+   if (  $targetName -ne $null)
+  {
+    $sampleFileName = $targetName + $sampleSuffix
 
+  }
+  else {
+
+  $sampleFileName = $file.basename + $sampleSuffix
+  }
 
   while (!(Test-Path $samplesTarget))
   {
@@ -796,7 +808,7 @@ function Print1 ($file,[string]$obrazcyParentDir)
     $iOF = 1;
     while (Test-Path $outFile)
     {
-      $outFile = ("$outFileS(" + $iOF.ToString() + ").pdf")
+      $outFile = ("$($outFileS)_0" + $iOF.ToString() + ".pdf")
       ++ $iOF;
     }
   }
@@ -1008,8 +1020,8 @@ function Print1 ($file,[string]$obrazcyParentDir)
 
     if ($errP -ne $null)
     {
-      WarnAndLog " InDesign не обнаружен либо не запускается"
-      Write-Debug "PrinInDesign failde : $errP "
+      WarnAndLog " InDesign проблемы"
+      Write-Debug "PrinInDesign fail : $errP "
     }
   }
   if ($errP -ne $null)
@@ -1270,7 +1282,7 @@ function SetLog
  {   
      $thisScr =  Get-Item $MyInvocation.ScriptName
      #(Join-Path $targetP $samplesTargetDirName)
-       $logFile = Join-Path $targetP ($thisScr.Name + ".log")
+       $Script:logFile = Join-Path $targetP ($thisScr.Name + ".log")
    Write-Output "Log file (not created if no error): `"$logFile`"  "
   }
   SetLog
@@ -1326,20 +1338,20 @@ function ExtractSpecified
 
 }
 
-function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
+function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir, [string]$targetName)
 {
   #$logFile = ((Get-Item $MyInvocation.ScriptName).Directory).FullName + ".log"
    # WarnAndLog "hey"
      
   [boolean]$algAOnly = $algAForB
 
-  $cont1 = Get-ChildItem $targetP1
+  $cont1 = @( Get-ChildItem $targetP1 )
 
 
 
 
   $ArchsExts = ($archs | ForEach-Object { $_[0] })
-
+  #$supportedDocs = "rtf", "cdr", "jpg", "tif", "doc", "docx, "indd", "pdf"
   #$nonArch = $cont1| Where-Object { '.zip','.rar' -notcontains  $_.Extension}#,'.config'
 
 
@@ -1443,29 +1455,17 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
 
       # $aafiles
       Write-debug "aafiles[0].pathAr = $($aafiles[0].pathAr)" 
-      # если папок нет
-      if (@( $aafiles | Where-Object { $_.isdir }).length -eq 0)
-      {
-
-        #[System.Reflection.Assembly]::LoadWithPartialName("System.IO.Path")
-        $wildCardFArray = $docExtensions
-        $TMPfullP = ExtractSpecified $value $wildCardFArray
-        Write-debug   "TMPfullP = $TMPfullP "
-         $extracteFolder = Get-Item $TMPfullP
-          if ($extracteFolder -ne $null)
-          {
-            Algs $extracteFolder $true $value.Directory
-          }
-          Remove-Item $TMPfullP -Force -Recurse  | Out-Null
-
-      }
-      else
+ 
+      if ($TRUE)
       { # $aafiles |  Measure-Object -Property depth  -
-        $aFfiles = $aafiles | Where-Object { !$_.isdir -and ($_.depth -gt 1) }
+        $aFfiles = @($aafiles | 
+            Where-Object { 
+                !$_.isdir -and ($_.depth -gt 0)
+            } )
         # 	| Sort -Property depth -Descending
 
         #первая, если вторая будет глубже - не подходит
-        [int]$depth = 1
+        [int]$depth = 0
         $deepest_firstIndex = 0
         for ($iA = 0; $iA -lt $aFfiles.Count;++ $iA)
         {
@@ -1487,9 +1487,17 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
 
         }
         $arTargdirSplit = ($aTrgetFPath | select -First ($aTrgetFPath.Count + (-1)))
-        $arTargdir = $arTargdirSplit -join "\";
-        $aFfilesTargFolder = ($aFfiles | Where-Object { (Compare-Object -ReferenceObject ($_.pathAr | select -First ($depth + (-1))) -DifferenceObject $arTargdirSplit -SyncWindow 0) -eq $null }) # $_.path	-like  "$arTargdir\*"
+        $arTargdir = $null
+        if ($arTargdirSplit -eq $null)
+          {  $arTargdir = "\" }
+        else
+          { $arTargdir = $arTargdirSplit -join "\"; }
+        $aFfilesTargFolder = ($aFfiles | Where-Object {
+           ( ($arTargdirSplit -eq $null) -and ($_.depth -eq 1) ) -or
+             (Compare-Object -ReferenceObject ($_.pathAr | select -First ($depth + (-1))) -DifferenceObject $arTargdirSplit -SyncWindow 0) -eq $null 
+        }) # $_.path	-like  "$arTargdir\*"
         # @($aFfiles[$deepest_firstIndex])
+
 
         #currently  One file
         $pretendent1 = @();
@@ -1536,7 +1544,7 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
           if ($extracteFolder -ne $null)
           {
 
-            Algs $extracteFolder $true $value.Directory
+            Algs $extracteFolder $true $value.Directory $value.BaseName
           }
           Remove-Item $TMPfullP -Force -Recurse | Out-Null
 
@@ -1547,7 +1555,7 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
 
         }
 
-      }
+      } #TRUE
 
       <#  $archCont = $archContT | Select-String -Pattern "Path = (.*)"
 
@@ -1567,13 +1575,15 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
     }
 	  #>
     }
-    else
+    elseif ($docExtensions -contains ".$fExt")
     {
       #if (!$algAForB)
       #{ continue; } 
-      AlgA_Iter $value $obrazcyParentDir
+      Print1 $value $obrazcyParentDir $targetName
       #break;
     }
+    else 
+      { Write-Debug "Skipped = $value" }
   }
 
 
@@ -1589,7 +1599,7 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir)
 # $Printers = Get-WmiObject -Class Win32_Printer $Printers|where { $_.Default }
 $initiallyDefaultPrinter = Get-WmiObject -ComputerName . -Class Win32_Printer -Filter "Default=True"
 
-Algs $targetP $false $null
+Algs $targetP $false $null $null
 
 
 <#
