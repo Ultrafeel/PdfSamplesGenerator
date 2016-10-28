@@ -594,16 +594,26 @@ function TestFileWritable ($file1)
   catch {
     $false }
 }
-$InDesign = $null
-function PrinInDesign ([string]$fileToPrint,[string]$printer)
+function PrinInDesignInternal ([string]$fileToPrint,[string]$printer,$InDesign1)
 {
-  if ($InDesign -eq $null)
+
+    trap
+    {
+           if ($InDesign1 -ne $null)
+           {   $InDesign1.Quit(0x6e6f2020)  }
+        return @("InDesign.Quit PrinInDesignInternal error trap :  $_" , $_)
+
+    }
+    Write-Warning  "PrinInDesignInternal"
+
+  if ($InDesign1 -eq $null)
   {
-    $InDesign = New-Object -Com InDesign.Application
+    $InDesign1 = New-Object -Com InDesign.Application
 
   }
-  if ($InDesign -eq $null)
+  if ($InDesign1 -eq $null)
   {
+ 
     return $false
   }
   <#$Awindows =  $InDesign.ActiveWindow 
@@ -617,7 +627,22 @@ function PrinInDesign ([string]$fileToPrint,[string]$printer)
   #idDefault = 0x44666c74,
   #idOpenOriginal = 0x4f704f72,
   #idOpenCopy = 0x4f704370
-  $indd_doc = $InDesign.Open($fileToPrint,$false,0x4f704370)
+  $indd_doc = $InDesign1.Open($fileToPrint,$false,0x4f704370)
+
+    if ($indd_doc -eq $null)
+    {
+    #       typedef [helpstring("Options for saving a document before closing or quitting.")]
+    #enum {
+    #    idNo = 0x6e6f2020,
+    #    idAsk = 0x61736b20,
+    #    idYes = 0x79657320
+    #} idSaveOptions;
+
+       $InDesign.Quit(0x6e6f2020)
+        return "indq"
+    }
+
+  # $links1 = $indd_doc.Links
   #$indd_doc.SetDocVisible($false)"InDesign.idOpenOptions.idOpenCopy"
   #$PRINTERNAMe = "Bullzip PDF Printer"
   #  $printPresetName = $printer.Replace(" ","_") + "8";
@@ -633,8 +658,26 @@ function PrinInDesign ([string]$fileToPrint,[string]$printer)
   #$printPref.PageRange = [System.Runtime.InteropServices.BStrWrapper]"1-9"
   $printPref.Printer = $printer
   $indd_doc.PrintOut($false)
+   # BackgroundTask
+
+ #   $taskCount = $InDesign1.BackgroundTasks.Count
+	#if ($taskCount -eq 0) {
+ #   	Write-Host("There is no BackgroundTask task.")
+ #   }
+ #   Else
+ #   {
+	#	$str = ""
+	#	For ($i = 1 ; $i -lt $taskCount; ++$i)
+	#	{	
+ #           $myIdleTask = $InDesign1.BackgroundTasks.Item($i)
+	#		$str = $str +  "BackgroundTask   $($myIdleTask.id):  $($myIdleTask.name) \r\n"
+ #         }
+		
+	#	Write-Host($str)
+	#}
+
   #Return value: A list of task states for task that finished. Type: Array of idTaskState enumerators
-  $taskStates = $InDesign.WaitForAllTasks()
+  $taskStates = $InDesign1.WaitForAllTasks()
   #Constant idAsk = 1634954016 (&H61736b20)
   #Constant idNo = 1852776480 (&H6e6f2020)
   #    Default member of InDesign.idSaveOptions
@@ -642,6 +685,75 @@ function PrinInDesign ([string]$fileToPrint,[string]$printer)
   $indd_doc.Close(1852776480)
 
 
+}
+  $InDesign = $null
+
+ function PrinInDesign ([string]$fileToPrint,[string]$printer)
+{
+  if ($InDesign -eq $null)
+  {
+  #  $InDesign = New-Object -Com InDesign.Application
+
+  }
+  if ($InDesign -eq $null)
+  {
+ 
+   # return $false
+  }
+
+     $func = (Get-Command  PrinInDesignInternal);
+
+    for ($tryI = 2; $tryI -gt 0; --$tryI)
+    {
+      $jobCD = Start-Job -ScriptBlock $func.ScriptBlock -ArgumentList @( $fileToPrint,$printer, $InDesign)
+    #TODO timeout  
+        $tmout =  40
+      Wait-Job $jobCD  -Timeout $tmout | Out-Host
+    if ($jobCD.State -ne "Completed")
+    {
+        $nottryAgain = $jobCD.State -eq "Running"
+         if ($nottryAgain)
+        { $tryI = 0   }
+         Write-Warning "timeout -> Stop InDesign"
+        Stop-Job $jobCD  | Out-Host
+        try {
+            Get-Process  -Name "InDesign" | foreach {
+               Write-Warning "fail stop : $_ "
+                Stop-Process $_ -Force   
+
+            }
+       # Write-Warning $killRes
+            }
+        catch
+        {
+           Write-Debug " stop ind : $_"     
+      }
+            continue
+        #return $true;          
+     }
+      $_out1 = $null
+      try {
+        $_out1 = $jobCD.ChildJobs[0].Output[0]
+      }
+      catch
+      {
+        Write-Debug "p  $jobCD.ChildJobs[0].Output[0]  catched:$_ ||| $_out1"
+        $_out1 = $_
+      }
+
+      if ($_out1 -eq $null -and $jobCD.State -eq "Completed")
+      {
+          #success
+        return $_out1
+      }
+    else
+    { 
+
+        continue    
+
+     }
+  }
+    return $true
 }
   $samplesTargetDirName = "Образцы"
 
@@ -896,6 +1008,7 @@ function Print1 ($file,[string]$obrazcyParentDir)
 
     if ($errP -ne $null)
     {
+      WarnAndLog " InDesign не обнаружен либо не запускается"
       Write-Debug "PrinInDesign failde : $errP "
     }
   }
@@ -1043,7 +1156,14 @@ function Print1 ($file,[string]$obrazcyParentDir)
         continue
 
       }
-      elseif ($iW -gt 9000) #TODO
+      elseif ($iW -gt 90 -and ($file.Extension -eq ".indd")) #TODO
+      {
+        WarnAndLog "Конвертация файла `"$($file.FullName)`" прервана, т.к. затянулась"
+        Remove-Item $outFile -Force -ErrorAction SilentlyContinue;
+        break;
+
+      } 
+      elseif ($iW -gt 9900) #TODO
       {
         WarnAndLog "Конвертация файла `"$($file.FullName)`" прервана, т.к. затянулась"
         Remove-Item $outFile -Force -ErrorAction SilentlyContinue;

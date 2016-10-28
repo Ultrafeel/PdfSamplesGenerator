@@ -13,7 +13,7 @@
     <PowerShellVersion>v4</PowerShellVersion>
     <ProcessorArchitecture />
     <RequiredModules />
-    <DebugArguments>"d:\!Work\Pdf_c\Тестовый каталог z"</DebugArguments>
+    <DebugArguments>"d:\!Work\Pdf_c\Тестовый каталог i"</DebugArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
