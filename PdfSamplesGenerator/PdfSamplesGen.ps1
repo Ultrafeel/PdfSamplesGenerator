@@ -707,7 +707,7 @@ function PrinInDesignInternal ([string]$fileToPrint,[string]$printer,$InDesign1)
     {
       $jobCD = Start-Job -ScriptBlock $func.ScriptBlock -ArgumentList @( $fileToPrint,$printer, $InDesign)
     #TODO timeout  
-        $tmout =  40
+        $tmout =  60
       Wait-Job $jobCD  -Timeout $tmout | Out-Host
     if ($jobCD.State -ne "Completed")
     {
@@ -803,6 +803,13 @@ function Print1 ($file,[string]$obrazcyParentDir, [string]$targetName)
 
   $outFileS = "$samplesTarget\$sampleFileName"
   $outFile = ("$outFileS" + ".pdf")
+  if ($file.basename -like "*!NO")
+  {
+      #TODO
+      Write-Debug "Suspicioue $file"
+      #msgBoxRetryCancel ("Wy $($file.FullName)?")
+  }
+
   if ($checkExistance)
   {
     $iOF = 1;
@@ -1233,21 +1240,6 @@ $archs =
 #(("z","taz"),"Z"),
 #(("cpio"),"CPIO")
 
-function AlgA_Iter($value,$obrazcyParentDir)
-{
-  
-  if ($docExtensions1 -contains $value.Extension)
-  {
-
-    Print1 $value $obrazcyParentDir
-  }
-  elseif ($value.Extension -eq ".pdf")
-  {
-    Print1 $value $obrazcyParentDir
-  }
-
-  Write-Debug $value.FullName
-}
 
 #not in PS2 !! echo $MyInvocation.PSCommandPath
 
@@ -1291,7 +1283,14 @@ function ExtractSpecified
   param($value,$wildCardFArray)
 
   $TMPfullP = $value.FullName + "ext"
-  $out7z =  $null
+ try {
+  Remove-Item $TMPfullP -Force -Recurse | Out-Null
+     }
+    catch{
+    Write-Debug "remove old arch $_"      
+    }
+     
+     $out7z =  $null
   if ($wildCardFArray.Count -gt 1)
   {
     $TMPfiltFile = "ExtList.extList" #Get-Item ($value.Directory.ToString()+  [System.IO.Path]::GetTempFileName()
@@ -1385,6 +1384,7 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir, [string]$
       {
         continue;
       }
+      Write-Output " Обработка архива $($value.FullName)"
       $archContT = & $u7z "l" "-slt" $value.FullName
 
       $aafiles = { @() }.Invoke(); #System.Collections.ObjectModel.Collection`1[System.Management.Automation.PSObject]
@@ -1467,23 +1467,28 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir, [string]$
         #первая, если вторая будет глубже - не подходит
         [int]$depth = 0
         $deepest_firstIndex = 0
-        for ($iA = 0; $iA -lt $aFfiles.Count;++ $iA)
+        for ($iA = 0; $iA -lt $aafiles.Count;++ $iA)
         {
-          $afile = $aFfiles[$iA];
-          if ($afile.depth -gt $depth)
+          $afile = $aafiles[$iA];
+            $fd = $afile.depth
+            if ($afile.isdir)
+            { $fd++ } 
+          if ($fd -gt $depth)
           {
-            $depth = $afile.depth
+            $depth = $fd
             $deepest_firstIndex = $iA
           }
-          elseif ($afile.depth -lt $depth)
+          elseif ($fd -lt $depth)
           { break; }
         }
-        $aTrgetFPath = @( $aFfiles[$deepest_firstIndex].pathAr)
-        if ($aTrgetFPath.Count -lt $depth)
+        $aTrgetFPath = @( $aafiles[$deepest_firstIndex].pathAr)
+          if ($aafiles[$deepest_firstIndex].isdir)
+          {  $aTrgetFPath =  $aTrgetFPath + @(".") }
+        if ($aTrgetFPath.Count -lt ($depth ))
         {
           Write-Debug "pathAr strange"
-          $aFfiles[$deepest_firstIndex].pathAr = $aFfiles[$deepest_firstIndex].Path.Split('\')
-          $aTrgetFPath = $aFfiles[$deepest_firstIndex].pathAr
+          $aafiles[$deepest_firstIndex].pathAr = $aafiles[$deepest_firstIndex].Path.Split('\')
+          $aTrgetFPath = $aafiles[$deepest_firstIndex].pathAr
 
         }
         $arTargdirSplit = ($aTrgetFPath | select -First ($aTrgetFPath.Count + (-1)))
@@ -1524,7 +1529,7 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir, [string]$
 
             $pretendent1 = @( $aFfilesTargFolder | Where-Object {
                 $_.pathAr[$_.pathAr.Count + (-1)] -like $mask[0] -or
-                (($mask.Count -le 1) -or
+                (($mask.Count -gt 1) -and
                   ($_.pathAr[$_.pathAr.Count + (- 1)] -like $mask[1]))
               })
 
@@ -1551,7 +1556,7 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir, [string]$
         }
         else
         {
-          WarnAndLog "[$(get-date)] архив `"$($value.Fullname)`" не содержит искомых файлов"
+          WarnAndLog " архив `"$($value.Fullname)`" не содержит искомых файлов"
 
         }
 
