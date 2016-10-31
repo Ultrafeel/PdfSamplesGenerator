@@ -1210,12 +1210,12 @@ function Print1 ($file,[string]$obrazcyParentDir, [string]$targetName)
   if ($settingsBackFile -ne $null -and $settingsBackFile.Exists) #(Test-Path "$settings.back")
   {
     Remove-Item -Force $settings
-    Move-Item -Force $settingsBackFile.FullName $SF1 -ErrorAction SilentlyContinue
+    Move-Item -Force $settingsBackFile.FullName $settings -ErrorAction SilentlyContinue
   }
   elseif (Test-Path $settingsBackFileName)
   {
     Remove-Item -Force $settings
-    Move-Item -Force $settingsBackFileName $SF1 -ErrorAction SilentlyContinue
+    Move-Item -Force $settingsBackFileName $settings -ErrorAction SilentlyContinue
   }
 
 
