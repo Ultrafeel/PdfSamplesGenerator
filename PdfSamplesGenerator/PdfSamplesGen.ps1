@@ -781,7 +781,7 @@ function Print1 ($file,[string]$obrazcyParentDir, [string]$targetName)
   $samplesTarget = Join-Path -Path $obrazcyParentDir -ChildPath $samplesTargetDirName
   $sampleFileName = $null
     
-   if (  $targetName -ne $null)
+   if (  $targetName -ne $null  -and $targetName -ne "") # 
   {
     $sampleFileName = $targetName + $sampleSuffix
 
