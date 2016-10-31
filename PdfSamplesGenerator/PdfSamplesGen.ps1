@@ -424,6 +424,7 @@ namespace CorelInterop1
              prs.Copies = 1;
             prs.PrintRange = PrnPrintRange.prnPageRange;//Corel.Interop. 3 == PrnPrintRange VGCore.prnPageRange
             prs.PageRange = "1-8";
+            //prs.PaperSize = PrnPaperSize.prnPaperSizeA3;
             if (prs.Printer.Name != printer)
             {
                 for (int iPr = 0; iPr < cdraw.Printers.Count; iPr++)
@@ -933,6 +934,7 @@ function Print1 ($file,[string]$obrazcyParentDir, [string]$targetName)
   confirmoverwrite=no
   autorotatepages=none
   showprogressfinished=yes
+  suppresserrors=yes
 "@
 
 
