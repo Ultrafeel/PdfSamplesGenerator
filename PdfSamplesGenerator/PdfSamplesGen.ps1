@@ -14,7 +14,7 @@
 #$gh1.pdftk()
 ##$gh1 = New-Object  PdfWriter.PdfInternal.Ghostscript
 #$ErrorActionPreference =  "Inquire" #
-$DebugPreference = "Continue"
+#$DebugPreference = "Continue"
 Set-StrictMode -Version 2.0
 $scriptStartDate = Get-Date
 
@@ -708,7 +708,7 @@ function PrinInDesignInternal ([string]$fileToPrint,[string]$printer,$InDesign1)
     {
       $jobCD = Start-Job -ScriptBlock $func.ScriptBlock -ArgumentList @( $fileToPrint,$printer, $InDesign)
     #TODO timeout  
-        $tmout =  60
+        $tmout =  70
       Wait-Job $jobCD  -Timeout $tmout | Out-Host
     if ($jobCD.State -ne "Completed")
     {
@@ -804,12 +804,9 @@ function Print1 ($file,[string]$obrazcyParentDir, [string]$targetName)
 
   $outFileS = "$samplesTarget\$sampleFileName"
   $outFile = ("$outFileS" + ".pdf")
-  if ($file.basename -like "*!NO")
-  {
-      #TODO
-      Write-Debug "Suspicioue $file"
-      #msgBoxRetryCancel ("Wy $($file.FullName)?")
-  }
+  #if ($file.basename -like "*!NO")
+  #{    Write-Debug "Suspicioue $file"
+  #    #msgBoxRetryCancel ("Wy $($file.FullName)?")  }
 
   if ($checkExistance)
   {
@@ -1170,7 +1167,7 @@ function Print1 ($file,[string]$obrazcyParentDir, [string]$targetName)
 
       $keysToSkip = 's'
       if ($iW -eq 0)
-      {
+      { #TODO
         Start-Sleep -Milliseconds $(10 * $waitPeriodMs)
         continue;
       }
@@ -1181,7 +1178,7 @@ function Print1 ($file,[string]$obrazcyParentDir, [string]$targetName)
         continue
 
       }
-      elseif ($iW -gt 90 -and ($file.Extension -eq ".indd")) #TODO
+      elseif ($iW -gt 8000 -and ($file.Extension -eq ".indd")) #TODO
       {
         WarnAndLog "Конвертация файла `"$($file.FullName)`" прервана, т.к. затянулась"
         Remove-Item $outFile -Force -ErrorAction SilentlyContinue;
