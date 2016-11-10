@@ -914,7 +914,9 @@ function Print1 ($file,[string]$obrazcyParentDir, [string]$targetName)
   #ECHO author=PdfSamplesGenerator 	>> "$settings"
   #ECHO showsettings=never 			>> "$settings"
   #ECHO showpdf=no >> "$settings"
-
+  $suppresserrors = "yes"
+  if ($DebugPreference -eq "Continue")
+  { $suppresserrors = "no"    }
   # Нельзя добавлять в конце пробелы!!
   Out-File "$settings" -Encoding "unicode" -InputObject @"
 [PDF Printer]
@@ -934,7 +936,9 @@ function Print1 ($file,[string]$obrazcyParentDir, [string]$targetName)
   confirmoverwrite=no
   autorotatepages=none
   showprogressfinished=yes
-  suppresserrors=yes
+  suppresserrors=$suppresserrors
+  embedallfonts=yes
+  subsetfonts=yes
 "@
 
 
