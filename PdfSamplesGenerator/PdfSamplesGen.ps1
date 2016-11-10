@@ -1530,7 +1530,7 @@ function Algs ([string]$targetP1,[boolean]$algAForB,$obrazcyParentDir, [string]$
           if ($pretendent1.Count -gt 0)
           { break; }
           foreach ($mask in (("*.jpg","*.jpeg"),@( "*.pdf"),@( "*.tif"),@( "*.cdr"),
-              @( "telo..*.doc","telo..*.docx"),@( "*.doc","*.docx")))
+              @( "telo*.doc","telo*.docx"),@( "*.doc","*.docx")))
           {
 
             $pretendent1 = @( $aFfilesTargFolder | Where-Object {
